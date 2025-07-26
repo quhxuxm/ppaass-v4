@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package rpc_service;
+
+enum EncryptionType {
+    ENCRYPTION_TYPE_PLAIN = 0;
+    ENCRYPTION_TYPE_AES = 1;
+    ENCRYPTION_TYPE_BLOWFISH = 2;
+}
+
+enum DataPacketType {
+    DATA_PACKET_TYPE_DESTINATION_SETUP = 0;
+    DATA_PACKET_TYPE_DATA_TRANSFER = 1;
+    DATA_PACKET_TYPE_CLOSE_CONNECTION = 2;
+}
+
+message HandshakeRequestPacket {
+    string username = 1;
+    EncryptionType encryption_type = 2;
+    bytes encryption_token = 3;
+}
+
+message HandshakeResponsePacket {
+    EncryptionType encryption_type = 1;
+    bytes encryption_token = 2;
+}
+
+message DataPacket {
+    string username = 1;
+    EncryptionType encryption_type = 2;
+    DataPacketType data_packet_type = 3;
+    bytes encryption_token = 4;
+    bytes packet_payload = 5;
+}
+
+/**
+ * The service of ppaass application process.
+ */
+service PpaassProcess {
+    /**
+     * The handshake process
+     */
+    rpc handshake (HandshakeRequestPacket) returns (HandshakeResponsePacket);
+
+    /**
+     * The tunnel process
+     */
+    rpc tunnel (stream DataPacket) returns (stream DataPacket);
+}
