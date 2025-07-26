@@ -1,49 +1,28 @@
 syntax = "proto3";
 
-package rpc_service;
+package rpc_process;
 
-enum EncryptionType {
-    ENCRYPTION_TYPE_PLAIN = 0;
-    ENCRYPTION_TYPE_AES = 1;
-    ENCRYPTION_TYPE_BLOWFISH = 2;
-}
+import "connection.proto";
+import "relay.proto";
+import "session.proto";
 
-enum DataPacketType {
-    DATA_PACKET_TYPE_DESTINATION_SETUP = 0;
-    DATA_PACKET_TYPE_DATA_TRANSFER = 1;
-    DATA_PACKET_TYPE_CLOSE_CONNECTION = 2;
-}
-
-message HandshakeRequestPacket {
-    string username = 1;
-    EncryptionType encryption_type = 2;
-    bytes encryption_token = 3;
-}
-
-message HandshakeResponsePacket {
-    EncryptionType encryption_type = 1;
-    bytes encryption_token = 2;
-}
-
-message DataPacket {
-    string username = 1;
-    EncryptionType encryption_type = 2;
-    DataPacketType data_packet_type = 3;
-    bytes encryption_token = 4;
-    bytes packet_payload = 5;
-}
 
 /**
  * The service of ppaass application process.
  */
-service PpaassProcess {
+service RpcProcess {
     /**
-     * The handshake process
+     * Create session process
      */
-    rpc handshake (HandshakeRequestPacket) returns (HandshakeResponsePacket);
+    rpc create_session (CreateSessionRequest) returns (CreateSessionResponse);
 
     /**
-     * The tunnel process
+     * Create connection process
      */
-    rpc tunnel (stream DataPacket) returns (stream DataPacket);
+    rpc create_connection (CreateConnectionRequest) returns (CreateConnectionResponse);
+
+    /**
+     * Relay data process
+     */
+    rpc relay (stream RelayData) returns (stream RelayData);
 }

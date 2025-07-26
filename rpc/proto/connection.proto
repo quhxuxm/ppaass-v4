@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package rpc_process;
+
+import "values.proto";
+
+enum CreateConnectionFailureStatus {
+    CREATE_CONNECTION_FAILURE_STATUS_AUTH = 0;
+    CREATE_CONNECTION_FAILURE_STATUS_CONNECT_REMOTE = 1;
+}
+
+message CreateConnectionRequest {
+    string session_id = 1;
+    DestinationAddressType destination_address_type = 2;
+    string destination_address = 3;
+}
+
+message CreateConnectionResponse {
+    oneof content {
+        string connection_id = 1;
+        CreateConnectionFailureStatus status = 2;
+    }
+}

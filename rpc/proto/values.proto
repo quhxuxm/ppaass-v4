@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rpc_process;
+
+/**
+ * The encryption type
+ */
+enum EncryptionType {
+    ENCRYPTION_TYPE_PLAIN = 0;
+    ENCRYPTION_TYPE_AES = 1;
+    ENCRYPTION_TYPE_BLOWFISH = 2;
+}
+
+/**
+ * The destination address type
+ */
+enum DestinationAddressType {
+    DESTINATION_ADDRESS_TYPE_IP = 0;
+    DESTINATION_ADDRESS_TYPE_DOMAIN = 1;
+}
