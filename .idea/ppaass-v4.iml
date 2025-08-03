@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/proxy/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rpc/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/common/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crypto/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
