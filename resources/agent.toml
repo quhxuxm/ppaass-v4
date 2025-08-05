@@ -1,0 +1,14 @@
+listening_address = "0.0.0.0:10090"
+client_max_connections = 1024
+log_directory = "log"
+log_name_prefix = "ppaass-agent.log"
+max_log_level = "ERROR"
+worker_threads = 32
+user_repo_refresh_interval_sec = 5
+user_repo_directory = "resources/agent/user"
+user_repo_refresh_interval = 10
+user_info_file_name = "user_info.toml"
+user_info_public_key_file_name = "ProxyPublicKey.pem"
+user_info_private_key_file_name = "AgentPrivateKey.pem"
+username = "user1"
+proxy_connect_timeout = 20

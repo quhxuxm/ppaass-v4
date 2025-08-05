@@ -1,0 +1,22 @@
+[package]
+name = "agent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+protocol = { path = "../protocol" }
+common = { path = "../common" }
+crypto = { path = "../crypto" }
+common-macro = { path = "../common-macro" }
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["full"] }
+thiserror = { workspace = true }
+toml = { workspace = true, features = ["parse"] }
+tracing = { workspace = true }
+tokio-util = { workspace = true, features = ["codec", "io"] }
+hyper = { workspace = true, features = ["full"] }
+hyper-util = { workspace = true, features = ["full"] }
+http-body-util = { workspace = true }
+tower = { workspace = true }
+fast-socks5 = { workspace = true, features = ["default"] }
+clap = { workspace = true, features = ["derive"] }
