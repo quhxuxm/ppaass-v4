@@ -3,12 +3,12 @@ use crate::error::Error;
 use common::pool::PROXY_CONNECTION_POOL;
 use common::proxy::DestinationType;
 use common::{ServerState, WithServerConfig};
-use fast_socks5::server::{Socks5ServerProtocol, SocksServerError, run_udp_proxy_custom};
+use fast_socks5::server::{run_udp_proxy_custom, Socks5ServerProtocol, SocksServerError};
 use fast_socks5::util::target_addr::TargetAddr;
-use fast_socks5::{Socks5Command, parse_udp_request};
+use fast_socks5::{parse_udp_request, Socks5Command};
 use protocol::UnifiedAddress;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use tokio::io::{AsyncReadExt, AsyncWriteExt, copy_bidirectional};
+use tokio::io::{copy_bidirectional, AsyncReadExt, AsyncWriteExt};
 use tokio::net::UdpSocket;
 use tracing::{debug, error, info};
 
@@ -40,8 +40,6 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
             let proxy_connection = PROXY_CONNECTION_POOL
                 .get()
                 .ok_or(Error::ProxyConnectionPoolNotSet)?
-                .write()
-                .await
                 .fetch_connection()
                 .await;
             let destination_address = convert_address(&dst_addr);
@@ -104,8 +102,6 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                             )),
                             context: "Fail to build proxy connection.",
                         })?
-                        .write()
-                        .await
                         .fetch_connection()
                         .await;
                     let destination_address = convert_address(&dst_addr);
@@ -142,7 +138,7 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                     Ok(())
                 },
             )
-            .await?;
+                .await?;
         }
     }
     Ok(())

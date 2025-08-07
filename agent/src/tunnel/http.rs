@@ -1,7 +1,7 @@
 use crate::error::Error;
-use common::ServerState;
 use common::pool::PROXY_CONNECTION_POOL;
 use common::proxy::DestinationType;
+use common::ServerState;
 use http_body_util::combinators::BoxBody;
 use http_body_util::{BodyExt, Empty};
 use hyper::body::Incoming;
@@ -64,8 +64,6 @@ async fn client_http_request_handler(
     let proxy_connection = PROXY_CONNECTION_POOL
         .get()
         .ok_or(Error::ProxyConnectionPoolNotSet)?
-        .write()
-        .await
         .fetch_connection()
         .await;
     let mut proxy_connection = proxy_connection
@@ -98,7 +96,7 @@ async fn client_http_request_handler(
                         &mut upgraded_client_io,
                         &mut proxy_connection,
                     )
-                    .await
+                        .await
                     {
                         Err(e) => {
                             error!("Fail to proxy data between agent and proxy: {e:?}");

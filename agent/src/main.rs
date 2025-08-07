@@ -11,7 +11,6 @@ use common::pool::{ProxyConnectionPool, PROXY_CONNECTION_POOL};
 use common::user::UserRepository;
 use common::{build_server_runtime, init_log, start_server, ServerState, WithUsernameConfig};
 use tokio::signal;
-use tokio::sync::RwLock;
 use tracing::{debug, error, info};
 
 async fn handle_connection(server_state: ServerState) -> Result<(), Error> {
@@ -28,8 +27,7 @@ fn main() -> Result<(), Error> {
         let user_info = get_agent_user_repo()
             .find_user(config.username())
             .expect("Can not find user");
-        let proxy_connection_pool = ProxyConnectionPool::new(user_info, config);
-        if let Err(_) = PROXY_CONNECTION_POOL.set(RwLock::new(proxy_connection_pool)) {
+        if let Err(_) = PROXY_CONNECTION_POOL.set(ProxyConnectionPool::new(user_info, config)) {
             error!("Fail to store proxy connection pool into once lock");
             return;
         };

@@ -3,11 +3,11 @@ use crate::user::UserWithProxyServers;
 use crate::WithConnectionPoolConfig;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, Notify, RwLock};
+use tokio::sync::{Mutex, Notify};
 use tokio::time::sleep;
 use tracing::error;
 
-pub static PROXY_CONNECTION_POOL: OnceLock<RwLock<ProxyConnectionPool>> = OnceLock::new();
+pub static PROXY_CONNECTION_POOL: OnceLock<ProxyConnectionPool> = OnceLock::new();
 
 pub struct ProxyConnectionPool<'a>
 where
@@ -57,7 +57,7 @@ where
             connections_available_notify,
         }
     }
-    pub async fn fetch_connection(&mut self) -> ProxyConnection<ProxyFramed<'a>> {
+    pub async fn fetch_connection(&self) -> ProxyConnection<ProxyFramed<'a>> {
         loop {
             self.connections_available_notify.notified().await;
             let connection = self.connections.lock().await.pop();
