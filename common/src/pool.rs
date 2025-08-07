@@ -3,7 +3,7 @@ use crate::user::UserWithProxyServers;
 use crate::WithConnectionPoolConfig;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, Notify};
+use tokio::sync::{Mutex, Notify, Semaphore};
 use tokio::time::sleep;
 use tracing::error;
 
@@ -14,7 +14,7 @@ where
     'a: 'static,
 {
     connections: Arc<Mutex<Vec<ProxyConnection<ProxyFramed<'a>>>>>,
-    connections_available_notify: Arc<Notify>,
+    connections_semaphore: Arc<Semaphore>,
 }
 
 impl<'a> ProxyConnectionPool<'a>
@@ -29,14 +29,15 @@ where
         let proxy_connect_timeout = config.proxy_connect_timeout();
         let connection_pool_size = config.connection_pool_size();
         let connections = Arc::new(Mutex::new(vec![]));
-        let connections_available_notify = Arc::new(Notify::new());
+        let connections_semaphore = Arc::new(Semaphore::new(0));
         {
             let connections = connections.clone();
-            let connections_available_notify = connections_available_notify.clone();
+            let connections_semaphore = connections_semaphore.clone();
             tokio::spawn(async move {
                 loop {
                     let mut connections = connections.lock().await;
                     if connections.len() >= connection_pool_size {
+                        drop(connections);
                         sleep(Duration::from_secs(1)).await;
                         continue;
                     }
@@ -48,18 +49,21 @@ where
                         }
                     };
                     connections.push(proxy_connection);
-                    connections_available_notify.notify_waiters();
+                    connections_semaphore.add_permits(1);
                 }
             });
         }
         ProxyConnectionPool {
             connections,
-            connections_available_notify,
+            connections_semaphore,
         }
     }
     pub async fn fetch_connection(&self) -> ProxyConnection<ProxyFramed<'a>> {
         loop {
-            self.connections_available_notify.notified().await;
+            if let Err(e) = self.connections_semaphore.acquire().await {
+                error!("Fail to acquire proxy connection pool semaphore: {e:?}");
+                continue;
+            };
             let connection = self.connections.lock().await.pop();
             match connection {
                 None => {
