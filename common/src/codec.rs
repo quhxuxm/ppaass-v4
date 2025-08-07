@@ -12,7 +12,10 @@ pub struct SecureLengthDelimitedCodec<'a> {
 }
 
 impl<'a> SecureLengthDelimitedCodec<'a> {
-    pub fn new(decoder_encryption: Cow<'a, Encryption>, encoder_encryption: Cow<'a, Encryption>) -> Self {
+    pub fn new(
+        decoder_encryption: Cow<'a, Encryption>,
+        encoder_encryption: Cow<'a, Encryption>,
+    ) -> Self {
         Self {
             decoder_encryption,
             encoder_encryption,

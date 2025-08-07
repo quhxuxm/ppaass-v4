@@ -32,3 +32,4 @@ clap = "4.5"
 syn = "2.0"
 proc-macro2 = "1.0"
 quote = "1.0"
+

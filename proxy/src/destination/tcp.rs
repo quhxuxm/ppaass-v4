@@ -26,8 +26,8 @@ impl TcpDestEndpoint {
             Duration::from_secs(connect_timeout),
             TcpStream::connect(&dst_addrs[..]),
         )
-            .await
-            .map_err(|_| CommonError::ConnectTimeout(connect_timeout))??;
+        .await
+        .map_err(|_| CommonError::ConnectTimeout(connect_timeout))??;
         let dst_addr = tcp_stream.peer_addr()?;
         Ok(Self {
             dst_addr,

@@ -1,9 +1,6 @@
 use crate::command::CommandArgs;
 use clap::Parser;
-use common_macro::{
-    FileSystemUserRepoConfig, LogConfig, ServerConfig, UserRepositoryConfig,
-    UsernameConfig,
-};
+use common_macro::{ConnectionPoolConfig, FileSystemUserRepoConfig, LogConfig, ServerConfig, UserRepositoryConfig, UsernameConfig};
 use core::panic;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
@@ -11,10 +8,12 @@ use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::OnceLock;
+
 /// The default configuration file patch
 const DEFAULT_CONFIG_FILE: &str = "./resources/agent.toml";
 /// The global configuration object
 static CONFIG: OnceLock<Config> = OnceLock::new();
+
 /// Get the configuration
 pub fn get_config() -> &'static Config {
     CONFIG.get_or_init(|| {
@@ -39,6 +38,7 @@ pub fn get_config() -> &'static Config {
         config
     })
 }
+
 /// The configuration object
 #[derive(
     Serialize,
@@ -49,6 +49,7 @@ pub fn get_config() -> &'static Config {
     LogConfig,
     UserRepositoryConfig,
     FileSystemUserRepoConfig,
+    ConnectionPoolConfig
 )]
 pub struct Config {
     #[serde(default = "default_client_max_connections")]
@@ -77,11 +78,11 @@ pub struct Config {
     username: String,
     #[serde(default = "default_worker_thread")]
     worker_threads: usize,
+    #[serde(default = "default_connection_pool_size")]
+    connection_pool_size: usize,
 }
+
 impl Config {
-    pub fn proxy_connect_timeout(&self) -> u64 {
-        self.proxy_connect_timeout
-    }
     pub fn merge_command_args(&mut self, command: CommandArgs) {
         if let Some(listening_address) = command.listening_address {
             self.listening_address = listening_address;
@@ -106,60 +107,76 @@ impl Config {
         }
     }
 }
+
 /// The default agent listening address
 fn default_listening_address() -> SocketAddr {
     SocketAddr::from_str("0.0.0.0:80").expect("Wrong default listening address")
 }
+
 /// The default worker thread number
 fn default_worker_thread() -> usize {
     256
 }
+
 /// The default log file directory
 fn default_log_directory() -> PathBuf {
     PathBuf::from_str("./logs").expect("Wrong default log directory")
 }
+
 /// The default log file name prefix
 fn default_log_name_prefix() -> String {
     "ppaass-agent.log".to_string()
 }
+
 /// The default log level
 fn default_max_log_level() -> String {
     "error".to_string()
 }
+
 /// The default directory used to story the user
 /// information
 fn default_user_repo_directory() -> PathBuf {
     PathBuf::from_str("./resources/agent/user").expect("Wrong user repository directory")
 }
+
 /// The default user repository refresh interval
 fn default_user_repo_refresh_interval() -> u64 {
     10
 }
+
 /// The default user information file name
 fn default_user_info_file_name() -> String {
     "user_info.toml".to_string()
 }
+
 /// The default proxy public key file name
 fn default_user_info_public_key_file_name() -> String {
     "ProxyPublicKey.pem".to_string()
 }
+
 /// The default agent public key file name
 fn default_user_info_private_key_file_name() -> String {
     "AgentPublicKey.pem".to_string()
 }
-/// The defaul username
+
+/// The default username
 fn default_username() -> String {
     "user1".to_string()
 }
+
 /// The default proxy connect timeout.
 fn default_proxy_connect_timeout() -> u64 {
     10
 }
+
 /// The default max client connection number
 /// If the incoming client connection exceed this
-/// number, the client will waiting until there
+/// number, the client will wait until there
 /// is a connection available for it.
 fn default_client_max_connections() -> usize {
     1024
 }
 
+fn default_connection_pool_size() -> usize {
+    64
+}

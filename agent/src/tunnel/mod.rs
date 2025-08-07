@@ -1,14 +1,7 @@
 mod http;
 mod socks5;
 
-use crate::config::get_config;
 use crate::error::Error;
-use crate::user::get_agent_user_repo;
-use common::config::WithUsernameConfig;
-use common::proxy::Init;
-use common::proxy::{ProxyConnection, ProxyFramed};
-use common::user::UserRepository;
-use common::Error as CommonError;
 use common::ServerState;
 use tokio::io::AsyncWriteExt;
 use tracing::{debug, error};
@@ -47,16 +40,4 @@ pub async fn process(mut server_state: ServerState) -> Result<(), Error> {
         }
     }
     Ok(())
-}
-
-/// Fetch a proxy connection, the returned
-/// proxy connection complete handshake already.
-async fn fetch_proxy_connection<'a>() -> Result<ProxyConnection<ProxyFramed<'a>>, Error> {
-    let config = get_config();
-    let agent_user = get_agent_user_repo()
-        .find_user(config.username())
-        .ok_or(CommonError::UserNotExist(config.username().to_owned()))?;
-    ProxyConnection::<Init>::new(agent_user, config.proxy_connect_timeout())
-        .await
-        .map_err(Into::into)
 }

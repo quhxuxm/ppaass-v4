@@ -15,12 +15,8 @@ pub struct ClientTcpRelayEndpoint<'a> {
 }
 
 impl<'a> ClientTcpRelayEndpoint<'a> {
-    pub fn new(
-        client_stream: TcpStream,
-        codec: SecureLengthDelimitedCodec<'a>,
-    ) -> Self {
-        let client_framed = Framed::new(
-            client_stream, codec);
+    pub fn new(client_stream: TcpStream, codec: SecureLengthDelimitedCodec<'a>) -> Self {
+        let client_framed = Framed::new(client_stream, codec);
         Self {
             client_read_write: SinkWriter::new(StreamReader::new(client_framed)),
         }

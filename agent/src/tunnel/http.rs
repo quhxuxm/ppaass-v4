@@ -1,6 +1,6 @@
 use crate::error::Error;
-use crate::tunnel::fetch_proxy_connection;
 use common::ServerState;
+use common::pool::PROXY_CONNECTION_POOL;
 use common::proxy::DestinationType;
 use http_body_util::combinators::BoxBody;
 use http_body_util::{BodyExt, Empty};
@@ -15,6 +15,7 @@ use std::net::SocketAddr;
 use tokio_util::bytes::Bytes;
 use tower::ServiceBuilder;
 use tracing::{debug, error, info};
+
 pub async fn process_http_tunnel(server_state: ServerState) -> Result<(), Error> {
     let client_tcp_io = TokioIo::new(server_state.incoming_stream);
     let service_fn = ServiceBuilder::new().service(service_fn(|request| async {
@@ -60,12 +61,16 @@ async fn client_http_request_handler(
     debug!(
         "Receive client http request to destination: {destination_address:?}, client socket address: {client_addr}"
     );
-
-    let proxy_connection = fetch_proxy_connection().await?;
+    let proxy_connection = PROXY_CONNECTION_POOL
+        .get()
+        .ok_or(Error::ProxyConnectionPoolNotSet)?
+        .write()
+        .await
+        .fetch_connection()
+        .await;
     let mut proxy_connection = proxy_connection
         .setup_destination(destination_address, DestinationType::Tcp)
         .await?;
-
     if Method::CONNECT == client_http_request.method() {
         // Received an HTTP request like:
         // ```
@@ -101,7 +106,6 @@ async fn client_http_request_handler(
                         }
                         Ok((from_client, from_proxy)) => (from_client, from_proxy),
                     };
-
                     // Print message when done
                     info!(
                         "Agent wrote {} bytes to proxy, received {} bytes from proxy",
@@ -123,7 +127,6 @@ async fn client_http_request_handler(
                 error!("Proxy tcp connection failed: {:?}", err);
             }
         });
-
         let proxy_response = proxy_connection_sender
             .send_request(client_http_request)
             .await?;

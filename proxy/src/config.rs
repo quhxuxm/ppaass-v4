@@ -1,8 +1,7 @@
 use crate::command::CommandArgs;
 use clap::Parser;
 use common_macro::{
-    FileSystemUserRepoConfig, LogConfig, ServerConfig,  UserRepositoryConfig,
-    UsernameConfig,
+    FileSystemUserRepoConfig, LogConfig, ServerConfig, UserRepositoryConfig, UsernameConfig,
 };
 use core::panic;
 use serde::{Deserialize, Serialize};

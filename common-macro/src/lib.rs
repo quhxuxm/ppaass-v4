@@ -1,5 +1,24 @@
 use proc_macro::TokenStream;
 use quote::quote;
+
+#[proc_macro_derive(ConnectionPoolConfig)]
+pub fn derive_with_connection_pool_config(input: TokenStream) -> TokenStream {
+    let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
+    let struct_ident = derive_input.ident;
+    quote! {
+        impl common::WithConnectionPoolConfig for #struct_ident {
+            fn proxy_connect_timeout(&self) -> u64 {
+                self.proxy_connect_timeout
+            }
+
+            fn connection_pool_size(&self) -> usize {
+                self.connection_pool_size
+            }
+        }
+    }
+        .into()
+}
+
 #[proc_macro_derive(ServerConfig)]
 pub fn derive_with_server_config(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -21,6 +40,7 @@ pub fn derive_with_server_config(input: TokenStream) -> TokenStream {
     }
         .into()
 }
+
 #[proc_macro_derive(UsernameConfig)]
 pub fn derive_with_username_config(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -34,6 +54,7 @@ pub fn derive_with_username_config(input: TokenStream) -> TokenStream {
     }
         .into()
 }
+
 #[proc_macro_derive(LogConfig)]
 pub fn derive_with_log_config(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -53,6 +74,7 @@ pub fn derive_with_log_config(input: TokenStream) -> TokenStream {
     }
         .into()
 }
+
 #[proc_macro_derive(UserRepositoryConfig)]
 pub fn derive_with_user_repo_config(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
@@ -66,6 +88,7 @@ pub fn derive_with_user_repo_config(input: TokenStream) -> TokenStream {
     }
         .into()
 }
+
 #[proc_macro_derive(FileSystemUserRepoConfig)]
 pub fn derive_with_fs_user_repo_config(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);

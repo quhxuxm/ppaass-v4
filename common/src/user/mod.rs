@@ -1,11 +1,11 @@
 pub mod repo;
 use crate::Error;
 use crate::config::WithUserRepositoryConfig;
-use std::ops::Deref;
-use std::sync::Arc;
 use chrono::{DateTime, Utc};
 use crypto::RsaCrypto;
 use std::net::SocketAddr;
+use std::ops::Deref;
+use std::sync::Arc;
 /// The base user
 pub trait User {
     /// The username

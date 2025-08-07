@@ -16,6 +16,7 @@ pub struct ServerState {
     /// The incoming connection's address
     pub incoming_connection_addr: SocketAddr,
 }
+
 /// The guard of the server
 pub struct ServerGuard {
     /// The signal to stop the server

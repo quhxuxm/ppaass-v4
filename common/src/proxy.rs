@@ -1,7 +1,7 @@
 use crate::user::UserWithProxyServers;
 use crate::{
-    get_handshake_encryption, random_generate_encryption, rsa_decrypt_encryption, rsa_encrypt_encryption,
-    Error, SecureLengthDelimitedCodec,
+    Error, SecureLengthDelimitedCodec, get_handshake_encryption, random_generate_encryption,
+    rsa_decrypt_encryption, rsa_encrypt_encryption,
 };
 use bincode::config::Configuration;
 use futures_util::{SinkExt, StreamExt};
@@ -34,6 +34,7 @@ pub enum DestinationType {
 
 pub struct Init;
 
+#[derive(Debug)]
 /// The proxy connection.
 pub struct ProxyConnection<T> {
     state: T,
@@ -52,11 +53,14 @@ impl ProxyConnection<Init> {
             Duration::from_secs(connect_timeout),
             TcpStream::connect(user_info.proxy_servers()),
         )
-            .await
-            .map_err(|_| Error::ConnectTimeout(connect_timeout))??;
+        .await
+        .map_err(|_| Error::ConnectTimeout(connect_timeout))??;
         let mut handshake_framed = Framed::new(
             &mut proxy_stream,
-            SecureLengthDelimitedCodec::new(Cow::Borrowed(get_handshake_encryption()), Cow::Borrowed(get_handshake_encryption())),
+            SecureLengthDelimitedCodec::new(
+                Cow::Borrowed(get_handshake_encryption()),
+                Cow::Borrowed(get_handshake_encryption()),
+            ),
         );
         let agent_encryption = random_generate_encryption();
         let rsa_encrypted_agent_encryption = rsa_encrypt_encryption(
@@ -93,7 +97,10 @@ impl ProxyConnection<Init> {
         )?;
         let proxy_framed = Framed::new(
             proxy_stream,
-            SecureLengthDelimitedCodec::new(Cow::Owned(proxy_encryption), Cow::Owned(agent_encryption)),
+            SecureLengthDelimitedCodec::new(
+                Cow::Owned(proxy_encryption),
+                Cow::Owned(agent_encryption),
+            ),
         );
         Ok(ProxyConnection {
             state: proxy_framed,
@@ -138,7 +145,7 @@ impl<'a> ProxyConnection<ProxyFramed<'a>> {
     }
 }
 
-/// After setup destinition on proxy connection success,
+/// After setup destination on proxy connection success,
 /// the proxy connection will become reader & writer,
 /// and this is the reader part.
 impl<'a> AsyncRead for ProxyConnection<ProxyFramedReaderWriter<'a>> {
