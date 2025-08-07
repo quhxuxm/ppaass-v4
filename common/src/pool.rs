@@ -35,9 +35,7 @@ where
             let connections_semaphore = connections_semaphore.clone();
             tokio::spawn(async move {
                 loop {
-                    let mut connections = connections.lock().await;
-                    if connections.len() >= connection_pool_size {
-                        drop(connections);
+                    if connections_semaphore.available_permits() >= connection_pool_size {
                         sleep(Duration::from_secs(1)).await;
                         continue;
                     }
@@ -45,10 +43,10 @@ where
                         Ok(proxy_connection) => proxy_connection,
                         Err(e) => {
                             error!("Fail to create proxy connection: {e}");
-                            continue;
+                            return;
                         }
                     };
-                    connections.push(proxy_connection);
+                    connections.lock().await.push(proxy_connection);
                     connections_semaphore.add_permits(1);
                 }
             });
