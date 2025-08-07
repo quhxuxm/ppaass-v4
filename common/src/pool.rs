@@ -3,7 +3,7 @@ use crate::user::UserWithProxyServers;
 use crate::WithConnectionPoolConfig;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, Notify, Semaphore};
+use tokio::sync::{Mutex, Semaphore};
 use tokio::time::sleep;
 use tracing::error;
 
