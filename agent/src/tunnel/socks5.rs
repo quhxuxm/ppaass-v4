@@ -1,6 +1,6 @@
 use crate::config::get_config;
 use crate::error::Error;
-use common::pool::PROXY_CONNECTION_POOL;
+use crate::tunnel::fetch_proxy_connection;
 use common::proxy::DestinationType;
 use common::{ServerState, WithServerConfig};
 use fast_socks5::server::{run_udp_proxy_custom, Socks5ServerProtocol, SocksServerError};
@@ -37,11 +37,7 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                 "Receive socks5 CONNECT command: {}",
                 server_state.incoming_connection_addr
             );
-            let proxy_connection = PROXY_CONNECTION_POOL
-                .get()
-                .ok_or(Error::ProxyConnectionPoolNotSet)?
-                .fetch_connection()
-                .await;
+            let proxy_connection = fetch_proxy_connection().await?;
             let destination_address = convert_address(&dst_addr);
             let mut proxy_connection = proxy_connection
                 .setup_destination(destination_address, DestinationType::Tcp)
@@ -93,17 +89,13 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                         })?;
                     let (_, dst_addr, client_udp_data) =
                         parse_udp_request(&client_udp_socks5_packet).await?;
-                    let proxy_connection = PROXY_CONNECTION_POOL
-                        .get()
-                        .ok_or(Error::ProxyConnectionPoolNotSet)
+                    let proxy_connection = fetch_proxy_connection().await
                         .map_err(|e| SocksServerError::Io {
                             source: std::io::Error::other(format!(
                                 "Fail to build proxy connection: {e:?}"
                             )),
                             context: "Fail to build proxy connection.",
-                        })?
-                        .fetch_connection()
-                        .await;
+                        })?;
                     let destination_address = convert_address(&dst_addr);
                     let mut proxy_connection = proxy_connection
                         .setup_destination(destination_address, DestinationType::Udp)

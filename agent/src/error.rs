@@ -15,6 +15,4 @@ pub enum Error {
     FastSocks(#[from] SocksServerError),
     #[error("No destination host: {0}")]
     NoDestinationHost(Uri),
-    #[error("Proxy connection pool not set")]
-    ProxyConnectionPoolNotSet,
 }

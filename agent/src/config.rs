@@ -1,6 +1,6 @@
 use crate::command::CommandArgs;
 use clap::Parser;
-use common_macro::{ConnectionPoolConfig, FileSystemUserRepoConfig, LogConfig, ServerConfig, UserRepositoryConfig, UsernameConfig};
+use common_macro::{FileSystemUserRepoConfig, LogConfig, ServerConfig, UserRepositoryConfig, UsernameConfig};
 use core::panic;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
@@ -49,7 +49,6 @@ pub fn get_config() -> &'static Config {
     LogConfig,
     UserRepositoryConfig,
     FileSystemUserRepoConfig,
-    ConnectionPoolConfig
 )]
 pub struct Config {
     #[serde(default = "default_client_max_connections")]
@@ -78,11 +77,12 @@ pub struct Config {
     username: String,
     #[serde(default = "default_worker_thread")]
     worker_threads: usize,
-    #[serde(default = "default_connection_pool_size")]
-    connection_pool_size: usize,
 }
 
 impl Config {
+    pub fn proxy_connect_timeout(&self) -> u64 {
+        self.proxy_connect_timeout
+    }
     pub fn merge_command_args(&mut self, command: CommandArgs) {
         if let Some(listening_address) = command.listening_address {
             self.listening_address = listening_address;
@@ -175,8 +175,4 @@ fn default_proxy_connect_timeout() -> u64 {
 /// is a connection available for it.
 fn default_client_max_connections() -> usize {
     1024
-}
-
-fn default_connection_pool_size() -> usize {
-    64
 }

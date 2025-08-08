@@ -1,5 +1,5 @@
 use crate::error::Error;
-use common::pool::PROXY_CONNECTION_POOL;
+use crate::tunnel::fetch_proxy_connection;
 use common::proxy::DestinationType;
 use common::ServerState;
 use http_body_util::combinators::BoxBody;
@@ -61,11 +61,7 @@ async fn client_http_request_handler(
     debug!(
         "Receive client http request to destination: {destination_address:?}, client socket address: {client_addr}"
     );
-    let proxy_connection = PROXY_CONNECTION_POOL
-        .get()
-        .ok_or(Error::ProxyConnectionPoolNotSet)?
-        .fetch_connection()
-        .await;
+    let proxy_connection = fetch_proxy_connection().await?;
     let mut proxy_connection = proxy_connection
         .setup_destination(destination_address, DestinationType::Tcp)
         .await?;

@@ -11,11 +11,6 @@ pub trait WithServerConfig {
     fn worker_threads(&self) -> usize;
 }
 
-pub trait WithConnectionPoolConfig {
-    fn proxy_connect_timeout(&self) -> u64;
-    fn connection_pool_size(&self) -> usize;
-}
-
 /// The configuration for the server's logging.
 pub trait WithLogConfig {
     /// The directory where the server logs will be stored.

@@ -2,14 +2,12 @@ mod codec;
 pub mod config;
 mod error;
 mod log;
-pub mod pool;
 pub mod proxy;
 mod runtime;
 mod server;
 pub mod user;
 
 pub use codec::SecureLengthDelimitedCodec;
-pub use config::WithConnectionPoolConfig;
 pub use config::WithFileSystemUserRepoConfig;
 pub use config::WithLogConfig;
 pub use config::WithServerConfig;
