@@ -42,7 +42,7 @@ where
                         Ok(proxy_connection) => proxy_connection,
                         Err(e) => {
                             error!("Fail to create proxy connection: {e}");
-                            return;
+                            continue;
                         }
                     };
                     connections.push(proxy_connection);
