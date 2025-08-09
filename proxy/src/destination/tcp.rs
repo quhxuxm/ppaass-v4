@@ -1,6 +1,5 @@
 use crate::error::Error;
 use common::Error as CommonError;
-use futures_util::SinkExt;
 use protocol::UnifiedAddress;
 use std::io::Error as StdIoError;
 use std::net::SocketAddr;
