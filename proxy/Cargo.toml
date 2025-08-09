@@ -5,6 +5,7 @@ edition = "2024"
 
 [[bin]]
 name = "ppaass-proxy"
+path = "src/bin/ppaass-proxy.rs"
 
 [dependencies]
 protocol = { path = "../protocol" }

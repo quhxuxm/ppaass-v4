@@ -10,8 +10,10 @@ use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::OnceLock;
+
 const DEFAULT_CONFIG_FILE: &str = "./resources/proxy.toml";
 static CONFIG: OnceLock<Config> = OnceLock::new();
+
 pub fn get_config() -> &'static Config {
     CONFIG.get_or_init(|| {
         let command_line = CommandArgs::parse();
@@ -35,6 +37,7 @@ pub fn get_config() -> &'static Config {
         config
     })
 }
+
 #[derive(
     Debug,
     Serialize,
@@ -44,7 +47,7 @@ pub fn get_config() -> &'static Config {
     UserRepositoryConfig,
     FileSystemUserRepoConfig,
 )]
-pub(crate) struct ForwardConfig {
+pub struct ForwardConfig {
     #[serde(default = "default_forward_proxy_connect_timeout")]
     proxy_connect_timeout: u64,
     #[serde(default = "default_forward_user_info_file_name")]
@@ -59,11 +62,13 @@ pub(crate) struct ForwardConfig {
     user_repo_refresh_interval: u64,
     username: String,
 }
+
 impl ForwardConfig {
     pub fn proxy_connect_timeout(&self) -> u64 {
         self.proxy_connect_timeout
     }
 }
+
 #[derive(
     Debug,
     Serialize,
@@ -73,7 +78,7 @@ impl ForwardConfig {
     UserRepositoryConfig,
     FileSystemUserRepoConfig,
 )]
-pub(crate) struct Config {
+pub struct Config {
     #[serde(default = "default_listening_address")]
     listening_address: SocketAddr,
     #[serde(default = "default_client_max_connections")]
@@ -100,6 +105,7 @@ pub(crate) struct Config {
     destination_connect_timeout: u64,
     forward: Option<ForwardConfig>,
 }
+
 impl Config {
     pub fn destination_connect_timeout(&self) -> u64 {
         self.destination_connect_timeout
@@ -128,58 +134,76 @@ impl Config {
         self.forward.as_ref()
     }
 }
+
 fn default_listening_address() -> SocketAddr {
     SocketAddr::from_str("0.0.0.0:80").expect("Wrong default listening address")
 }
+
 fn default_worker_thread() -> usize {
     256
 }
+
 fn default_log_directory() -> PathBuf {
     PathBuf::from_str("./logs").expect("Wrong default log directory")
 }
+
 fn default_log_name_prefix() -> String {
     "ppaass-proxy.log".to_string()
 }
+
 fn default_max_log_level() -> String {
     "error".to_string()
 }
+
 fn default_user_repo_directory() -> PathBuf {
     PathBuf::from_str("./resources/proxy/user").expect("Wrong user repository directory")
 }
+
 fn default_user_repo_refresh_interval() -> u64 {
     10
 }
+
 fn default_user_info_file_name() -> String {
     "user_info.toml".to_string()
 }
+
 fn default_user_info_public_key_file_name() -> String {
     "AgentPublicKey.pem".to_string()
 }
+
 fn default_user_info_private_key_file_name() -> String {
     "ProxyPublicKey.pem".to_string()
 }
+
 fn default_forward_user_repo_directory() -> PathBuf {
     PathBuf::from_str("./resources/proxy/forward_user")
         .expect("Wrong forward user repository directory")
 }
+
 fn default_forward_user_repo_refresh_interval() -> u64 {
     10
 }
+
 fn default_forward_user_info_file_name() -> String {
     "user_info.toml".to_string()
 }
+
 fn default_forward_user_info_public_key_file_name() -> String {
     "ProxyPublicKey.pem".to_string()
 }
+
 fn default_forward_user_info_private_key_file_name() -> String {
     "AgentPublicKey.pem".to_string()
 }
+
 fn default_forward_proxy_connect_timeout() -> u64 {
     10
 }
+
 fn default_destination_connect_timeout() -> u64 {
     10
 }
+
 fn default_client_max_connections() -> usize {
     1024
 }

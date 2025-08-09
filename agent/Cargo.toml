@@ -5,6 +5,7 @@ edition = "2024"
 
 [[bin]]
 name = "ppaass-agent"
+path = "src/bin/ppaass-agent.rs"
 
 [dependencies]
 protocol = { path = "../protocol" }
