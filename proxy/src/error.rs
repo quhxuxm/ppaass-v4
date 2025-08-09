@@ -1,6 +1,7 @@
 use common::Error as CommonError;
 use protocol::Error as ProtocolError;
 use thiserror::Error;
+
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
@@ -11,4 +12,6 @@ pub enum Error {
     Common(#[from] CommonError),
     #[error(transparent)]
     Protocol(#[from] ProtocolError),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
 }
