@@ -1,4 +1,5 @@
 #!/bin/sh
+chmod +x ppaass-proxy
 a=0
 while [ $a -lt 5 ];
 do
