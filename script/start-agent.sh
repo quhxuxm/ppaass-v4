@@ -2,13 +2,13 @@
 a=0
 while [ $a -lt 5 ];
 do
-    process_id=$(ps -ef | grep "ppaass-2025-agent" | grep -v grep | awk '{print $2}')
+    process_id=$(ps -ef | grep "ppaass-agent" | grep -v grep | awk '{print $2}')
     if [ -z $process_id ]; then
-        echo "No ppaass-2025-agent process"
+        echo "No ppaass-agent process"
     else
-        echo "Found ppaass-2025-agent process: $process_id"
+        echo "Found ppaass-agent process: $process_id"
         kill -9 $process_id
-        echo "Kill ppaass-2025-agent process: $process_id"
+        echo "Kill ppaass-agent process: $process_id"
         break
     fi
     a=`expr $a + 1`

@@ -3,6 +3,9 @@ name = "agent"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "ppaass-agent"
+
 [dependencies]
 protocol = { path = "../protocol" }
 common = { path = "../common" }
