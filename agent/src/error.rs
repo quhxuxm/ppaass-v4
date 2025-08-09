@@ -15,4 +15,6 @@ pub enum Error {
     FastSocks(#[from] SocksServerError),
     #[error("No destination host: {0}")]
     NoDestinationHost(Uri),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
 }
