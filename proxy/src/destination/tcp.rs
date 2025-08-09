@@ -52,7 +52,7 @@ impl TcpDestEndpoint {
                 error!("Fail to send destination tcp stream");
             };
         });
-        let tcp_stream = dst_connection_rx.await.map_err(|e| Error::Unknown("Fail to receive destination tcp stream".to_string()))?;
+        let tcp_stream = dst_connection_rx.await.map_err(|_| Error::Unknown("Fail to receive destination tcp stream".to_string()))?;
         let dst_addr = tcp_stream.peer_addr()?;
         Ok(Self {
             dst_addr,
