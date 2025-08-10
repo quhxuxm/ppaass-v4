@@ -8,7 +8,7 @@ use common::proxy::{ProxyConnection, ProxyFramed};
 use common::user::UserRepository;
 use common::{ServerState, WithUsernameConfig};
 use tokio::io::AsyncWriteExt;
-use tokio::sync::oneshot::channel;
+use tokio::sync::oneshot::Sender;
 use tracing::{debug, error};
 
 const SOCKS4_VERSION_FLAG: u8 = 4;
@@ -47,13 +47,12 @@ pub async fn process(mut server_state: ServerState) -> Result<(), Error> {
     Ok(())
 }
 
-async fn fetch_proxy_connection<'a>() -> Result<ProxyConnection<ProxyFramed<'a>>, Error>
+async fn fetch_proxy_connection(proxy_connection_tx: Sender<ProxyConnection<ProxyFramed<'static>>>) -> Result<(), Error>
 {
     let config = get_config();
     let agent_user = get_agent_user_repo()
         .find_user(config.username())
         .ok_or(common::Error::UserNotExist(config.username().to_owned()))?;
-    let (proxy_connection_tx, proxy_connection_rx) = channel();
     tokio::spawn(async move {
         let connection = match ProxyConnection::new(agent_user, config.proxy_connect_timeout()).await.map_err(Error::Common) {
             Ok(connection) => connection,
@@ -66,6 +65,5 @@ async fn fetch_proxy_connection<'a>() -> Result<ProxyConnection<ProxyFramed<'a>>
             error!("Fail to send proxy connection to channel");
         }
     });
-    let proxy_connection = proxy_connection_rx.await.map_err(|_| Error::Unknown("Fail to receive proxy connection from channel".to_string()))?;
-    Ok(proxy_connection)
+    Ok(())
 }

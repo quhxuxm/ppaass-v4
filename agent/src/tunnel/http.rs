@@ -12,6 +12,7 @@ use hyper::{Method, Request, Response};
 use hyper_util::rt::TokioIo;
 use protocol::UnifiedAddress;
 use std::net::SocketAddr;
+use tokio::sync::oneshot::channel;
 use tokio_util::bytes::Bytes;
 use tower::ServiceBuilder;
 use tracing::{debug, error, info};
@@ -61,10 +62,8 @@ async fn client_http_request_handler(
     debug!(
         "Receive client http request to destination: {destination_address:?}, client socket address: {client_addr}"
     );
-    let proxy_connection = fetch_proxy_connection().await?;
-    let mut proxy_connection = proxy_connection
-        .setup_destination(destination_address, DestinationType::Tcp)
-        .await?;
+    let (proxy_connection_tx, proxy_connection_rx) = channel();
+    fetch_proxy_connection(proxy_connection_tx).await?;
     if Method::CONNECT == client_http_request.method() {
         // Received an HTTP request like:
         // ```
@@ -85,6 +84,22 @@ async fn client_http_request_handler(
                     error!("Failed to upgrade client http request: {e}");
                 }
                 Ok(upgraded_client_io) => {
+                    let proxy_connection = match proxy_connection_rx.await {
+                        Ok(proxy_connection) => proxy_connection,
+                        Err(_) => {
+                            error!("Failed to receive proxy connection");
+                            return;
+                        }
+                    };
+                    let mut proxy_connection = match proxy_connection
+                        .setup_destination(destination_address.clone(), DestinationType::Tcp)
+                        .await {
+                        Ok(proxy_connection) => proxy_connection,
+                        Err(e) => {
+                            error!("Failed to setup destination [{destination_address}] on proxy connection: {e}");
+                            return;
+                        }
+                    };
                     // Connect to remote server
                     let mut upgraded_client_io = TokioIo::new(upgraded_client_io);
                     // Proxying data
@@ -110,6 +125,10 @@ async fn client_http_request_handler(
         });
         Ok(Response::new(success_empty_body()))
     } else {
+        let proxy_connection = proxy_connection_rx.await.map_err(|_| Error::Unknown("Failed to receive proxy connection".to_string()))?;
+        let proxy_connection = proxy_connection
+            .setup_destination(destination_address.clone(), DestinationType::Tcp)
+            .await?;
         let proxy_connection = TokioIo::new(proxy_connection);
         let (mut proxy_connection_sender, proxy_connection_obj) = Builder::new()
             .preserve_header_case(true)

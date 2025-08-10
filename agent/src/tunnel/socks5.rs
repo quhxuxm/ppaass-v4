@@ -10,6 +10,7 @@ use protocol::UnifiedAddress;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use tokio::io::{copy_bidirectional, AsyncReadExt, AsyncWriteExt};
 use tokio::net::UdpSocket;
+use tokio::sync::oneshot::channel;
 use tracing::{debug, error, info};
 
 fn convert_address(address: &TargetAddr) -> UnifiedAddress {
@@ -37,15 +38,17 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                 "Receive socks5 CONNECT command: {}",
                 server_state.incoming_connection_addr
             );
-            let proxy_connection = fetch_proxy_connection().await?;
+            let (proxy_connection_tx, proxy_connection_rx) = channel();
+            fetch_proxy_connection(proxy_connection_tx).await?;
             let destination_address = convert_address(&dst_addr);
-            let mut proxy_connection = proxy_connection
-                .setup_destination(destination_address, DestinationType::Tcp)
-                .await?;
             let mut socks5_client_stream = socks5_client_stream
                 .reply_success(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0)))
                 .await?;
             // Proxying data
+            let proxy_connection = proxy_connection_rx.await.map_err(|_| Error::Unknown("Failed to receive proxy connection".to_string()))?;
+            let mut proxy_connection = proxy_connection
+                .setup_destination(destination_address.clone(), DestinationType::Tcp)
+                .await?;
             let (from_client, from_proxy) =
                 match copy_bidirectional(&mut socks5_client_stream, &mut proxy_connection).await {
                     Err(e) => {
@@ -89,7 +92,8 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                         })?;
                     let (_, dst_addr, client_udp_data) =
                         parse_udp_request(&client_udp_socks5_packet).await?;
-                    let proxy_connection = fetch_proxy_connection().await
+                    let (proxy_connection_tx, proxy_connection_rx) = channel();
+                    fetch_proxy_connection(proxy_connection_tx).await
                         .map_err(|e| SocksServerError::Io {
                             source: std::io::Error::other(format!(
                                 "Fail to build proxy connection: {e:?}"
@@ -97,6 +101,12 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                             context: "Fail to build proxy connection.",
                         })?;
                     let destination_address = convert_address(&dst_addr);
+                    let proxy_connection = proxy_connection_rx.await.map_err(|e| SocksServerError::Io {
+                        source: std::io::Error::other(format!(
+                            "Fail to receive proxy connection: {e:?}"
+                        )),
+                        context: "Fail to receive proxy connection.",
+                    })?;
                     let mut proxy_connection = proxy_connection
                         .setup_destination(destination_address, DestinationType::Udp)
                         .await
