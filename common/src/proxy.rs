@@ -1,7 +1,7 @@
 use crate::user::UserWithProxyServers;
 use crate::{
-    Error, SecureLengthDelimitedCodec, get_handshake_encryption, random_generate_encryption,
-    rsa_decrypt_encryption, rsa_encrypt_encryption,
+    get_handshake_encryption, random_generate_encryption, rsa_decrypt_encryption, rsa_encrypt_encryption,
+    Error, SecureLengthDelimitedCodec,
 };
 use bincode::config::Configuration;
 use futures_util::{SinkExt, StreamExt};
@@ -12,7 +12,6 @@ use protocol::{
 use std::borrow::Cow;
 use std::io::Error as StdIoError;
 use std::pin::Pin;
-use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
@@ -43,7 +42,7 @@ pub struct ProxyConnection<T> {
 impl ProxyConnection<Init> {
     /// Create a new proxy connection
     pub async fn new<'a, U>(
-        user_info: Arc<U>,
+        user_info: &U,
         connect_timeout: u64,
     ) -> Result<ProxyConnection<ProxyFramed<'a>>, Error>
     where
@@ -53,8 +52,8 @@ impl ProxyConnection<Init> {
             Duration::from_secs(connect_timeout),
             TcpStream::connect(user_info.proxy_servers()),
         )
-        .await
-        .map_err(|_| Error::ConnectTimeout(connect_timeout))??;
+            .await
+            .map_err(|_| Error::ConnectTimeout(connect_timeout))??;
         let mut handshake_framed = Framed::new(
             &mut proxy_stream,
             SecureLengthDelimitedCodec::new(
