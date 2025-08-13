@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-protocol = { path = "../protocol" }
-crypto = { path = "../crypto" }
+ppaass-protocol = { path = "../protocol", package = "protocol" }
+ppaass-crypto = { path = "../crypto", package = "crypto" }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true, features = ["codec", "io"] }
@@ -16,6 +16,5 @@ rand = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
-bincode = { workspace = true }
 futures-util = { workspace = true, features = ["sink"] }
 

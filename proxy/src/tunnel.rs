@@ -5,7 +5,6 @@ use crate::destination::udp::UdpDestEndpoint;
 use crate::destination::Destination;
 use crate::error::Error;
 use crate::user::{get_forward_user_repo, get_user_repo};
-use bincode::config::Configuration;
 use common::config::UserConfig;
 use common::proxy::{DestinationType, ProxyConnection};
 use common::user::User;
@@ -49,24 +48,19 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
         "Waiting for receive handshake from client [{}]",
         server_state.incoming_connection_addr
     );
-    let handshake = handshake_framed
+    let handshake_request_bytes = handshake_framed
         .next()
         .await
         .ok_or(CommonError::ConnectionExhausted(format!(
             "Fail to read handshake message from agent: {}",
             server_state.incoming_connection_addr
         )))??;
-    let (
+    let
         HandshakeRequest {
             username: client_username,
             encryption: client_encryption,
-        },
-        _,
-    ) = bincode::serde::decode_from_slice::<HandshakeRequest, Configuration>(
-        &handshake,
-        bincode::config::standard(),
-    )
-        .map_err(CommonError::Decode)?;
+        }
+        = handshake_request_bytes.try_into()?;
     debug!(
         "Receive client handshake, client username: {client_username}, client encryption: {client_encryption:?}"
     );
@@ -90,13 +84,11 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
             .rsa_crypto()
             .ok_or(CommonError::UserRsaCryptoNotExist(client_username.clone()))?,
     )?;
-    let server_handshake = HandshakeResponse {
+    let handshake_response = HandshakeResponse {
         encryption: rsa_encrypted_server_encryption.into_owned(),
     };
-    let server_handshake_bytes =
-        bincode::serde::encode_to_vec(server_handshake, bincode::config::standard())
-            .map_err(CommonError::Encode)?;
-    handshake_framed.send(&server_handshake_bytes).await?;
+    let handshake_response_bytes: Vec<u8> = handshake_response.try_into()?;
+    handshake_framed.send(&handshake_response_bytes).await?;
     debug!(
         "Send handshake to client [{}], username: {client_username}, client_encryption: {client_encryption:?}, server_encryption: {server_encryption:?}",
         server_state.incoming_connection_addr
@@ -125,7 +117,7 @@ async fn process_connect_destination<'a>(
             Cow::Owned(server_encryption),
         ),
     );
-    let connect_destination_data_packet =
+    let connect_destination_request_bytes =
         connect_destination_frame
             .next()
             .await
@@ -133,12 +125,7 @@ async fn process_connect_destination<'a>(
                 "Fail to read destination setup message from agent: {}",
                 server_state.incoming_connection_addr
             )))??;
-    let (setup_destination, _) =
-        bincode::serde::decode_from_slice::<ConnectDestinationRequest, Configuration>(
-            &connect_destination_data_packet,
-            bincode::config::standard(),
-        )
-            .map_err(CommonError::Decode)?;
+    let connect_destination_request = connect_destination_request_bytes.try_into()?;
     let destination = match (get_config().forward(), get_forward_user_repo()) {
         (Some(forward_config), Some(forward_user_repository)) => {
             let forward_user_info = forward_user_repository
@@ -146,7 +133,7 @@ async fn process_connect_destination<'a>(
                 .ok_or(CommonError::UserNotExist(
                     forward_config.username().to_owned(),
                 ))?;
-            match setup_destination {
+            match connect_destination_request {
                 ConnectDestinationRequest::Tcp(dst_addr) => {
                     let proxy_connection = ProxyConnection::new(
                         forward_user_info,
@@ -163,7 +150,7 @@ async fn process_connect_destination<'a>(
                 }
             }
         }
-        _ => match setup_destination {
+        _ => match connect_destination_request {
             ConnectDestinationRequest::Tcp(dst_addr) => Destination::Tcp(
                 TcpDestEndpoint::connect(dst_addr, get_config().destination_connect_timeout())
                     .await?,
@@ -174,14 +161,10 @@ async fn process_connect_destination<'a>(
             },
         },
     };
-    let server_setup_destination_data_packet = ConnectDestinationResponse::Success;
-    let server_setup_destination_data_packet = bincode::serde::encode_to_vec(
-        server_setup_destination_data_packet,
-        bincode::config::standard(),
-    )
-        .map_err(CommonError::Encode)?;
+    let connect_destination_response = ConnectDestinationResponse::Success;
+    let connect_destination_response_bytes: Vec<u8> = connect_destination_response.try_into()?;
     connect_destination_frame
-        .send(&server_setup_destination_data_packet)
+        .send(&connect_destination_response_bytes)
         .await?;
     let FramedParts { codec, .. } = connect_destination_frame.into_parts();
     Ok(ConnectDestinationResult { codec, destination })

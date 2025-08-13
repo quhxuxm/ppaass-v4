@@ -2,7 +2,7 @@ use crate::config::FsUserRepoConfig;
 use crate::user::User;
 use crate::user::UserRepository;
 use crate::Error;
-use crypto::RsaCrypto;
+use ppaass_crypto::RsaCrypto;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::marker::PhantomData;

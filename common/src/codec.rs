@@ -1,6 +1,6 @@
 use crate::error::Error;
-use crypto::{decrypt_with_aes, decrypt_with_blowfish, encrypt_with_aes, encrypt_with_blowfish};
-use protocol::Encryption;
+use ppaass_crypto::{decrypt_with_aes, decrypt_with_blowfish, encrypt_with_aes, encrypt_with_blowfish};
+use ppaass_protocol::Encryption;
 use std::borrow::Cow;
 use tokio_util::bytes::{Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder, LengthDelimitedCodec};
