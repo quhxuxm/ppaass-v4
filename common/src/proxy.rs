@@ -73,7 +73,7 @@ impl ProxyConnection<Init> {
             encryption: rsa_encrypted_agent_encryption.into_owned(),
         };
         let client_handshake_bytes =
-            bincode::encode_to_vec(client_handshake, bincode::config::standard())?;
+            bincode::serde::encode_to_vec(client_handshake, bincode::config::standard())?;
         handshake_framed.send(&client_handshake_bytes).await?;
         let proxy_handshake_bytes =
             handshake_framed
@@ -84,7 +84,7 @@ impl ProxyConnection<Init> {
                     proxy_stream.peer_addr()?
                 )))??;
         let (rsa_encrypted_proxy_handshake, _) =
-            bincode::decode_from_slice::<ServerHandshake, Configuration>(
+            bincode::serde::decode_from_slice::<ServerHandshake, Configuration>(
                 &proxy_handshake_bytes,
                 bincode::config::standard(),
             )?;
@@ -124,14 +124,14 @@ impl<'a> ProxyConnection<ProxyFramed<'a>> {
             DestinationType::Udp => ClientSetupDestination::Udp(destination_addr.clone()),
         };
         let setup_destination_bytes =
-            bincode::encode_to_vec(setup_destination, bincode::config::standard())?;
+            bincode::serde::encode_to_vec(setup_destination, bincode::config::standard())?;
         proxy_framed.send(&setup_destination_bytes).await?;
         let proxy_setup_destination_bytes = proxy_framed
             .next()
             .await
             .ok_or(Error::ConnectionExhausted(format!("Fail to read setup destination connection message from proxy, destination address: {destination_addr:?}")))??;
         let (proxy_setup_destination, _) =
-            bincode::decode_from_slice::<ServerSetupDestination, Configuration>(
+            bincode::serde::decode_from_slice::<ServerSetupDestination, Configuration>(
                 &proxy_setup_destination_bytes,
                 bincode::config::standard(),
             )?;

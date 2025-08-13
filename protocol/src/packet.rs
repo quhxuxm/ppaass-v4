@@ -1,36 +1,43 @@
 use crate::address::UnifiedAddress;
-use bincode::{Decode, Encode};
-#[derive(Debug, Encode, Decode, Clone)]
+use bytes::Bytes;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Encryption {
     Plain,
-    Aes(Vec<u8>),
-    Blowfish(Vec<u8>),
+    Aes(Bytes),
+    Blowfish(Bytes),
 }
-#[derive(Debug, Encode, Decode)]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ClientHandshake {
     pub username: String,
     pub encryption: Encryption,
 }
-#[derive(Debug, Encode, Decode)]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerHandshake {
     pub encryption: Encryption,
 }
-#[derive(Debug, Encode, Decode)]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ClientSetupDestination {
     Tcp(UnifiedAddress),
     Udp(UnifiedAddress),
 }
-#[derive(Debug, Encode, Decode)]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ServerSetupDestination {
     Success,
     Fail,
 }
-#[derive(Debug, Encode, Decode)]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Relay {
-    Tcp(Vec<u8>),
+    Tcp(Bytes),
     Udp {
         src_addr: UnifiedAddress,
         dst_addr: UnifiedAddress,
-        payload: Vec<u8>,
+        payload: Bytes,
     },
 }

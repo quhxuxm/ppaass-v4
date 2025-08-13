@@ -28,7 +28,7 @@ use std::sync::LazyLock;
 
 static HANDSHAKE_ENCRYPTION: LazyLock<Arc<Encryption>> = LazyLock::new(|| {
     Arc::new(Encryption::Blowfish({
-        b"1212398347384737434783748347387438743742982332672763272320119203".to_vec()
+        b"1212398347384737434783748347387438743742982332672763272320119203".to_vec().into()
     }))
 });
 

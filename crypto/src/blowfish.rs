@@ -4,15 +4,18 @@ use blowfish::Blowfish;
 use bytes::Bytes;
 use cipher::block_padding::Pkcs7;
 use cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit};
+
 type BlowfishCbcEncryptor = cbc::Encryptor<Blowfish>;
 type BlowfishCbcDecryptor = cbc::Decryptor<Blowfish>;
+
 /// Generate the encryption token for Blowfish
 /// The first 56 bytes is the key
 /// The last 8 bytes is the iv
 #[inline(always)]
-pub fn generate_blowfish_encryption_token() -> Vec<u8> {
-    random_n_bytes::<64>()
+pub fn generate_blowfish_encryption_token() -> Bytes {
+    random_n_bytes::<64>().into()
 }
+
 /// Encrypt the target bytes with Blowfish
 #[inline(always)]
 pub fn encrypt_with_blowfish(encryption_token: &[u8], target: &[u8]) -> Result<Bytes, Error> {
@@ -21,6 +24,7 @@ pub fn encrypt_with_blowfish(encryption_token: &[u8], target: &[u8]) -> Result<B
     let result = encryptor.encrypt_padded_vec_mut::<Pkcs7>(target);
     Ok(result.into())
 }
+
 /// Decrypt the target bytes with Blowfish
 #[inline(always)]
 pub fn decrypt_with_blowfish(encryption_token: &[u8], target: &[u8]) -> Result<Bytes, Error> {
@@ -29,6 +33,7 @@ pub fn decrypt_with_blowfish(encryption_token: &[u8], target: &[u8]) -> Result<B
     let result = decryptor.decrypt_padded_vec_mut::<Pkcs7>(target)?;
     Ok(result.into())
 }
+
 #[test]
 fn test() -> Result<(), Error> {
     let encryption_token = generate_blowfish_encryption_token();
