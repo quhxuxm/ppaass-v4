@@ -1,4 +1,4 @@
-use crate::config::WithServerConfig;
+use crate::config::ServerConfig;
 use crate::error::Error;
 use std::error::Error as StdError;
 use std::net::SocketAddr;
@@ -33,7 +33,7 @@ pub struct ServerGuard {
 /// The server will return a `ServerGuard` that can be used to stop the server.
 pub fn start_server<C, F, Fut, Err>(config: &C, connection_handler: F) -> ServerGuard
 where
-    C: WithServerConfig,
+    C: ServerConfig,
     F: Fn(ServerState) -> Fut + Send + Sync + Copy + 'static,
     Fut: Future<Output = Result<(), Err>> + Send + 'static,
     Err: StdError + From<Error>,

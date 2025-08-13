@@ -2,7 +2,7 @@ use crate::config::get_config;
 use crate::error::Error;
 use crate::tunnel::fetch_proxy_connection;
 use common::proxy::DestinationType;
-use common::{ServerState, WithServerConfig};
+use common::{ServerConfig, ServerState};
 use fast_socks5::server::{run_udp_proxy_custom, Socks5ServerProtocol, SocksServerError};
 use fast_socks5::util::target_addr::TargetAddr;
 use fast_socks5::{parse_udp_request, Socks5Command};
@@ -47,7 +47,7 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
             // Proxying data
             let proxy_connection = proxy_connection_rx.await.map_err(|_| Error::Unknown("Failed to receive proxy connection".to_string()))?;
             let mut proxy_connection = proxy_connection
-                .setup_destination(destination_address.clone(), DestinationType::Tcp)
+                .connect_destination(destination_address.clone(), DestinationType::Tcp)
                 .await?;
             let (from_client, from_proxy) =
                 match copy_bidirectional(&mut socks5_client_stream, &mut proxy_connection).await {
@@ -73,7 +73,7 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                 socks5_client_stream,
                 &dst_addr,
                 None,
-                get_config().listening_address().ip(),
+                get_config().common().listening_address().ip(),
                 |client_udp_socket| async move {
                     let client_udp_socket =
                         UdpSocket::from_std(client_udp_socket.into()).map_err(|e| {
@@ -108,7 +108,7 @@ pub async fn process_socks5_tunnel(server_state: ServerState) -> Result<(), Erro
                         context: "Fail to receive proxy connection.",
                     })?;
                     let mut proxy_connection = proxy_connection
-                        .setup_destination(destination_address, DestinationType::Udp)
+                        .connect_destination(destination_address, DestinationType::Udp)
                         .await
                         .map_err(|e| SocksServerError::Io {
                             source: std::io::Error::other(format!(

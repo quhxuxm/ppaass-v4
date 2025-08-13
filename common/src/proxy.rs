@@ -6,7 +6,7 @@ use crate::{
 use bincode::config::Configuration;
 use futures_util::{SinkExt, StreamExt};
 use protocol::{
-    ClientHandshake, ClientSetupDestination, ServerHandshake, ServerSetupDestination,
+    ConnectDestinationRequest, ConnectDestinationResponse, HandshakeRequest, HandshakeResponse,
     UnifiedAddress,
 };
 use std::borrow::Cow;
@@ -68,7 +68,7 @@ impl ProxyConnection<Init> {
                 user_info.username().to_owned(),
             ))?,
         )?;
-        let client_handshake = ClientHandshake {
+        let client_handshake = HandshakeRequest {
             username: user_info.username().to_owned(),
             encryption: rsa_encrypted_agent_encryption.into_owned(),
         };
@@ -84,7 +84,7 @@ impl ProxyConnection<Init> {
                     proxy_stream.peer_addr()?
                 )))??;
         let (rsa_encrypted_proxy_handshake, _) =
-            bincode::serde::decode_from_slice::<ServerHandshake, Configuration>(
+            bincode::serde::decode_from_slice::<HandshakeResponse, Configuration>(
                 &proxy_handshake_bytes,
                 bincode::config::standard(),
             )?;
@@ -110,18 +110,18 @@ impl ProxyConnection<Init> {
 /// After handshake complete, the proxy connection can do
 /// setup destination
 impl<'a> ProxyConnection<ProxyFramed<'a>> {
-    /// Setup the destination, in this process
+    /// Connect to the destination, in this process
     /// server side will build tcp connection with
     /// the destination.
-    pub async fn setup_destination(
+    pub async fn connect_destination(
         self,
         destination_addr: UnifiedAddress,
         destination_type: DestinationType,
     ) -> Result<ProxyConnection<ProxyFramedReaderWriter<'a>>, Error> {
         let mut proxy_framed = self.state;
         let setup_destination = match destination_type {
-            DestinationType::Tcp => ClientSetupDestination::Tcp(destination_addr.clone()),
-            DestinationType::Udp => ClientSetupDestination::Udp(destination_addr.clone()),
+            DestinationType::Tcp => ConnectDestinationRequest::Tcp(destination_addr.clone()),
+            DestinationType::Udp => ConnectDestinationRequest::Udp(destination_addr.clone()),
         };
         let setup_destination_bytes =
             bincode::serde::encode_to_vec(setup_destination, bincode::config::standard())?;
@@ -131,15 +131,15 @@ impl<'a> ProxyConnection<ProxyFramed<'a>> {
             .await
             .ok_or(Error::ConnectionExhausted(format!("Fail to read setup destination connection message from proxy, destination address: {destination_addr:?}")))??;
         let (proxy_setup_destination, _) =
-            bincode::serde::decode_from_slice::<ServerSetupDestination, Configuration>(
+            bincode::serde::decode_from_slice::<ConnectDestinationResponse, Configuration>(
                 &proxy_setup_destination_bytes,
                 bincode::config::standard(),
             )?;
         match proxy_setup_destination {
-            ServerSetupDestination::Success => Ok(ProxyConnection {
+            ConnectDestinationResponse::Success => Ok(ProxyConnection {
                 state: SinkWriter::new(StreamReader::new(proxy_framed)),
             }),
-            ServerSetupDestination::Fail => Err(Error::SetupDestination(destination_addr)),
+            ConnectDestinationResponse::Fail => Err(Error::SetupDestination(destination_addr)),
         }
     }
 }

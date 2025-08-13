@@ -6,7 +6,7 @@ use crate::error::Error;
 use crate::user::get_agent_user_repo;
 use common::proxy::{ProxyConnection, ProxyFramed};
 use common::user::UserRepository;
-use common::{ServerState, WithUsernameConfig};
+use common::{ServerState, UserConfig};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::oneshot::Sender;
 use tracing::{debug, error};

@@ -6,7 +6,7 @@ use crate::destination::Destination;
 use crate::error::Error;
 use crate::user::{get_forward_user_repo, get_user_repo};
 use bincode::config::Configuration;
-use common::config::WithUsernameConfig;
+use common::config::UserConfig;
 use common::proxy::{DestinationType, ProxyConnection};
 use common::user::User;
 use common::user::UserRepository;
@@ -18,7 +18,7 @@ use common::{
 use destination::tcp::TcpDestEndpoint;
 use futures_util::{SinkExt, StreamExt};
 use protocol::{
-    ClientHandshake, ClientSetupDestination, Encryption, ServerHandshake, ServerSetupDestination,
+    ConnectDestinationRequest, ConnectDestinationResponse, Encryption, HandshakeRequest, HandshakeResponse,
 };
 use std::borrow::Cow;
 use std::net::SocketAddr;
@@ -32,7 +32,7 @@ struct HandshakeResult {
     server_encryption: Encryption,
 }
 
-struct SetupDestinationResult<'a> {
+struct ConnectDestinationResult<'a> {
     codec: SecureLengthDelimitedCodec<'a>,
     destination: Destination<'a>,
 }
@@ -57,12 +57,12 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
             server_state.incoming_connection_addr
         )))??;
     let (
-        ClientHandshake {
+        HandshakeRequest {
             username: client_username,
             encryption: client_encryption,
         },
         _,
-    ) = bincode::serde::decode_from_slice::<ClientHandshake, Configuration>(
+    ) = bincode::serde::decode_from_slice::<HandshakeRequest, Configuration>(
         &handshake,
         bincode::config::standard(),
     )
@@ -90,7 +90,7 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
             .rsa_crypto()
             .ok_or(CommonError::UserRsaCryptoNotExist(client_username.clone()))?,
     )?;
-    let server_handshake = ServerHandshake {
+    let server_handshake = HandshakeResponse {
         encryption: rsa_encrypted_server_encryption.into_owned(),
     };
     let server_handshake_bytes =
@@ -108,25 +108,25 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
     })
 }
 
-async fn process_setup_destination<'a>(
+async fn process_connect_destination<'a>(
     server_state: &mut ServerState,
     handshake_result: HandshakeResult,
-) -> Result<SetupDestinationResult<'a>, Error> {
+) -> Result<ConnectDestinationResult<'a>, Error> {
     let HandshakeResult {
         client_username,
         client_encryption,
         server_encryption,
     } = handshake_result;
     debug!("Begin to setup destination for client user: {client_username}");
-    let mut setup_destination_frame = Framed::new(
+    let mut connect_destination_frame = Framed::new(
         &mut server_state.incoming_stream,
         SecureLengthDelimitedCodec::new(
             Cow::Owned(client_encryption),
             Cow::Owned(server_encryption),
         ),
     );
-    let setup_destination_data_packet =
-        setup_destination_frame
+    let connect_destination_data_packet =
+        connect_destination_frame
             .next()
             .await
             .ok_or(CommonError::ConnectionExhausted(format!(
@@ -134,8 +134,8 @@ async fn process_setup_destination<'a>(
                 server_state.incoming_connection_addr
             )))??;
     let (setup_destination, _) =
-        bincode::serde::decode_from_slice::<ClientSetupDestination, Configuration>(
-            &setup_destination_data_packet,
+        bincode::serde::decode_from_slice::<ConnectDestinationRequest, Configuration>(
+            &connect_destination_data_packet,
             bincode::config::standard(),
         )
             .map_err(CommonError::Decode)?;
@@ -147,51 +147,51 @@ async fn process_setup_destination<'a>(
                     forward_config.username().to_owned(),
                 ))?;
             match setup_destination {
-                ClientSetupDestination::Tcp(dst_addr) => {
+                ConnectDestinationRequest::Tcp(dst_addr) => {
                     let proxy_connection = ProxyConnection::new(
                         forward_user_info,
                         forward_config.proxy_connect_timeout(),
                     )
                         .await?;
                     let proxy_connection = proxy_connection
-                        .setup_destination(dst_addr, DestinationType::Tcp)
+                        .connect_destination(dst_addr, DestinationType::Tcp)
                         .await?;
                     Destination::Forward(Box::new(proxy_connection))
                 }
-                ClientSetupDestination::Udp { .. } => {
+                ConnectDestinationRequest::Udp { .. } => {
                     unimplemented!("UDP still not support")
                 }
             }
         }
         _ => match setup_destination {
-            ClientSetupDestination::Tcp(dst_addr) => Destination::Tcp(
+            ConnectDestinationRequest::Tcp(dst_addr) => Destination::Tcp(
                 TcpDestEndpoint::connect(dst_addr, get_config().destination_connect_timeout())
                     .await?,
             ),
-            ClientSetupDestination::Udp(dst_addr) => Destination::Udp {
+            ConnectDestinationRequest::Udp(dst_addr) => Destination::Udp {
                 dst_udp_endpoint: UdpDestEndpoint::bind().await?,
                 dst_addr,
             },
         },
     };
-    let server_setup_destination_data_packet = ServerSetupDestination::Success;
+    let server_setup_destination_data_packet = ConnectDestinationResponse::Success;
     let server_setup_destination_data_packet = bincode::serde::encode_to_vec(
         server_setup_destination_data_packet,
         bincode::config::standard(),
     )
         .map_err(CommonError::Encode)?;
-    setup_destination_frame
+    connect_destination_frame
         .send(&server_setup_destination_data_packet)
         .await?;
-    let FramedParts { codec, .. } = setup_destination_frame.into_parts();
-    Ok(SetupDestinationResult { codec, destination })
+    let FramedParts { codec, .. } = connect_destination_frame.into_parts();
+    Ok(ConnectDestinationResult { codec, destination })
 }
 
 async fn process_relay<'a>(
     server_state: ServerState,
-    setup_target_endpoint_result: SetupDestinationResult<'a>,
+    setup_target_endpoint_result: ConnectDestinationResult<'a>,
 ) -> Result<(), Error> {
-    let SetupDestinationResult { codec, destination } = setup_target_endpoint_result;
+    let ConnectDestinationResult { codec, destination } = setup_target_endpoint_result;
     let ServerState {
         incoming_stream: client_stream,
         incoming_connection_addr: client_addr,
@@ -235,7 +235,7 @@ pub async fn process(mut server_state: ServerState) -> Result<(), Error> {
     let handshake_result = process_handshake(&mut server_state).await?;
     // Process destination setup
     let setup_target_endpoint_result =
-        process_setup_destination(&mut server_state, handshake_result).await?;
+        process_connect_destination(&mut server_state, handshake_result).await?;
     // Process relay
     process_relay(server_state, setup_target_endpoint_result).await?;
     Ok(())

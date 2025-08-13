@@ -1,6 +1,6 @@
 pub mod repo;
 
-use crate::config::WithUserRepositoryConfig;
+use crate::config::UserRepoConfig;
 use crate::Error;
 use chrono::{DateTime, Utc};
 use crypto::RsaCrypto;
@@ -35,7 +35,7 @@ where
     Self: Send + Sync + Sized + 'static,
 {
     type UserInfoType: User + Send + Sync + 'static;
-    type UserRepoConfigType: WithUserRepositoryConfig + Send + Sync + 'static;
+    type UserRepoConfigType: UserRepoConfig + Send + Sync + 'static;
     /// Create a user repository
     fn new<T>(config: T) -> Result<Self, Error>
     where

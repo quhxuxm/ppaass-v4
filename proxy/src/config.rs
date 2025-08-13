@@ -1,14 +1,11 @@
 use crate::command::CommandArgs;
 use clap::Parser;
-use common_macro::{
-    FileSystemUserRepoConfig, LogConfig, ServerConfig, UserRepositoryConfig, UsernameConfig,
-};
+use common::config::CommonConfig;
+use common::{FsUserRepoConfig, UserConfig, UserRepoConfig};
 use core::panic;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
-use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::OnceLock;
 
 const DEFAULT_CONFIG_FILE: &str = "./resources/proxy.toml";
@@ -43,22 +40,13 @@ pub fn get_config() -> &'static Config {
     Serialize,
     Deserialize,
     Clone,
-    UsernameConfig,
-    UserRepositoryConfig,
-    FileSystemUserRepoConfig,
 )]
 pub struct ForwardConfig {
-    #[serde(default = "default_forward_proxy_connect_timeout")]
     proxy_connect_timeout: u64,
-    #[serde(default = "default_forward_user_info_file_name")]
     user_info_file_name: String,
-    #[serde(default = "default_forward_user_info_private_key_file_name")]
     user_info_private_key_file_name: String,
-    #[serde(default = "default_forward_user_info_public_key_file_name")]
     user_info_public_key_file_name: String,
-    #[serde(default = "default_forward_user_repo_directory")]
     user_repo_directory: PathBuf,
-    #[serde(default = "default_forward_user_repo_refresh_interval")]
     user_repo_refresh_interval: u64,
     username: String,
 }
@@ -69,39 +57,41 @@ impl ForwardConfig {
     }
 }
 
+impl UserConfig for ForwardConfig {
+    fn username(&self) -> &str {
+        &self.username
+    }
+}
+
+impl UserRepoConfig for ForwardConfig {
+    fn refresh_interval_sec(&self) -> u64 {
+        self.user_repo_refresh_interval
+    }
+}
+
+impl FsUserRepoConfig for ForwardConfig {
+    fn user_repo_directory(&self) -> &Path {
+        &self.user_repo_directory
+    }
+    fn public_key_file_name(&self) -> &str {
+        &self.user_info_public_key_file_name
+    }
+    fn private_key_file_name(&self) -> &str {
+        &self.user_info_private_key_file_name
+    }
+    fn user_info_file_name(&self) -> &str {
+        &self.user_info_file_name
+    }
+}
+
 #[derive(
     Debug,
     Serialize,
     Deserialize,
-    ServerConfig,
-    LogConfig,
-    UserRepositoryConfig,
-    FileSystemUserRepoConfig,
 )]
 pub struct Config {
-    #[serde(default = "default_listening_address")]
-    listening_address: SocketAddr,
-    #[serde(default = "default_client_max_connections")]
-    client_max_connections: usize,
-    #[serde(default = "default_worker_thread")]
-    worker_threads: usize,
-    #[serde(default = "default_log_directory")]
-    log_directory: PathBuf,
-    #[serde(default = "default_log_name_prefix")]
-    log_name_prefix: String,
-    #[serde(default = "default_max_log_level")]
-    max_log_level: String,
-    #[serde(default = "default_user_repo_directory")]
-    user_repo_directory: PathBuf,
-    #[serde(default = "default_user_repo_refresh_interval")]
-    user_repo_refresh_interval: u64,
-    #[serde(default = "default_user_info_file_name")]
-    user_info_file_name: String,
-    #[serde(default = "default_user_info_public_key_file_name")]
-    user_info_public_key_file_name: String,
-    #[serde(default = "default_user_info_private_key_file_name")]
-    user_info_private_key_file_name: String,
-    #[serde(default = "default_destination_connect_timeout")]
+    #[serde(flatten)]
+    common_config: CommonConfig,
     destination_connect_timeout: u64,
     forward: Option<ForwardConfig>,
 }
@@ -110,100 +100,30 @@ impl Config {
     pub fn destination_connect_timeout(&self) -> u64 {
         self.destination_connect_timeout
     }
+    pub fn common(&self) -> &CommonConfig {
+        &self.common_config
+    }
     pub fn merge_command_args(&mut self, command: CommandArgs) {
         if let Some(listening_address) = command.listening_address {
-            self.listening_address = listening_address;
+            self.common_config.listening_address = listening_address;
         }
         if let Some(worker_threads) = command.worker_threads {
-            self.worker_threads = worker_threads;
+            self.common_config.worker_threads = worker_threads;
         }
         if let Some(log_directory) = command.log_directory {
-            self.log_directory = log_directory;
+            self.common_config.log_directory = log_directory;
         }
         if let Some(max_log_level) = command.max_log_level {
-            self.max_log_level = max_log_level;
+            self.common_config.max_log_level = max_log_level;
         }
         if let Some(user_repo_directory) = command.user_repo_directory {
-            self.user_repo_directory = user_repo_directory;
+            self.common_config.user_repo_directory = user_repo_directory;
         }
         if let Some(user_repo_refresh_interval) = command.user_repo_refresh_interval {
-            self.user_repo_refresh_interval = user_repo_refresh_interval;
+            self.common_config.user_repo_refresh_interval = user_repo_refresh_interval;
         }
     }
     pub fn forward(&self) -> Option<&ForwardConfig> {
         self.forward.as_ref()
     }
-}
-
-fn default_listening_address() -> SocketAddr {
-    SocketAddr::from_str("0.0.0.0:80").expect("Wrong default listening address")
-}
-
-fn default_worker_thread() -> usize {
-    256
-}
-
-fn default_log_directory() -> PathBuf {
-    PathBuf::from_str("./logs").expect("Wrong default log directory")
-}
-
-fn default_log_name_prefix() -> String {
-    "ppaass-proxy.log".to_string()
-}
-
-fn default_max_log_level() -> String {
-    "error".to_string()
-}
-
-fn default_user_repo_directory() -> PathBuf {
-    PathBuf::from_str("./resources/proxy/user").expect("Wrong user repository directory")
-}
-
-fn default_user_repo_refresh_interval() -> u64 {
-    10
-}
-
-fn default_user_info_file_name() -> String {
-    "user_info.toml".to_string()
-}
-
-fn default_user_info_public_key_file_name() -> String {
-    "AgentPublicKey.pem".to_string()
-}
-
-fn default_user_info_private_key_file_name() -> String {
-    "ProxyPublicKey.pem".to_string()
-}
-
-fn default_forward_user_repo_directory() -> PathBuf {
-    PathBuf::from_str("./resources/proxy/forward_user")
-        .expect("Wrong forward user repository directory")
-}
-
-fn default_forward_user_repo_refresh_interval() -> u64 {
-    10
-}
-
-fn default_forward_user_info_file_name() -> String {
-    "user_info.toml".to_string()
-}
-
-fn default_forward_user_info_public_key_file_name() -> String {
-    "ProxyPublicKey.pem".to_string()
-}
-
-fn default_forward_user_info_private_key_file_name() -> String {
-    "AgentPublicKey.pem".to_string()
-}
-
-fn default_forward_proxy_connect_timeout() -> u64 {
-    10
-}
-
-fn default_destination_connect_timeout() -> u64 {
-    10
-}
-
-fn default_client_max_connections() -> usize {
-    1024
 }

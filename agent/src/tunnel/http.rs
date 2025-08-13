@@ -92,7 +92,7 @@ async fn client_http_request_handler(
                         }
                     };
                     let mut proxy_connection = match proxy_connection
-                        .setup_destination(destination_address.clone(), DestinationType::Tcp)
+                        .connect_destination(destination_address.clone(), DestinationType::Tcp)
                         .await {
                         Ok(proxy_connection) => proxy_connection,
                         Err(e) => {
@@ -127,7 +127,7 @@ async fn client_http_request_handler(
     } else {
         let proxy_connection = proxy_connection_rx.await.map_err(|_| Error::Unknown("Failed to receive proxy connection".to_string()))?;
         let proxy_connection = proxy_connection
-            .setup_destination(destination_address.clone(), DestinationType::Tcp)
+            .connect_destination(destination_address.clone(), DestinationType::Tcp)
             .await?;
         let proxy_connection = TokioIo::new(proxy_connection);
         let (mut proxy_connection_sender, proxy_connection_obj) = Builder::new()

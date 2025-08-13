@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["agent", "common", "common-macro", "crypto", "protocol", "proxy"]
+members = ["agent", "common", "crypto", "protocol", "proxy"]
 [workspace.dependencies]
 tokio = "1.47"
 tokio-util = "0.7"
@@ -29,7 +29,5 @@ http-body-util = "0.1"
 tower = "0.5"
 fast-socks5 = "1.0.0-rc.0"
 clap = "4.5"
-syn = "2.0"
-proc-macro2 = "1.0"
-quote = "1.0"
+
 
