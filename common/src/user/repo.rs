@@ -3,6 +3,7 @@ use crate::user::User;
 use crate::user::UserRepository;
 use crate::Error;
 use ppaass_crypto::RsaCrypto;
+use ppaass_protocol::Username;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -15,7 +16,7 @@ where
     U: User + Send + Sync + DeserializeOwned + 'static,
     C: FsUserRepoConfig + Send + Sync + 'static,
 {
-    storage: HashMap<String, U>,
+    storage: HashMap<Username, U>,
     _config_mark: PhantomData<C>,
 }
 
@@ -26,7 +27,7 @@ where
 {
     fn fill_storage(
         config: &C,
-        storage: &mut HashMap<String, U>,
+        storage: &mut HashMap<Username, U>,
     ) -> Result<(), Error> {
         let user_repo_directory_path = config.user_repo_directory();
         let mut user_repo_directory = std::fs::read_dir(user_repo_directory_path)?;
@@ -93,7 +94,7 @@ where
                 }
             };
             user_info.set_rsa_crypto(user_rsa_crypto);
-            storage.insert(user_info.username().to_owned(), user_info);
+            storage.insert(user_info.username().clone(), user_info);
         }
         Ok(())
     }
@@ -119,8 +120,8 @@ where
             _config_mark: Default::default(),
         })
     }
-    fn find_user(&self, username: &str) -> Option<&Self::UserInfoType> {
-        let user_info = self.storage.get(username)?;
+    fn find_user(&self, username: &Username) -> Option<&Self::UserInfoType> {
+        let user_info = self.storage.get(&username)?;
         Some(user_info)
     }
     fn save_user(&mut self, user: Self::UserInfoType) {

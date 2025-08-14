@@ -16,9 +16,7 @@ use common::{
 };
 use destination::tcp::TcpDestEndpoint;
 use futures_util::{SinkExt, StreamExt};
-use protocol::{
-    ConnectDestinationRequest, ConnectDestinationResponse, Encryption, HandshakeRequest, HandshakeResponse,
-};
+use protocol::{ConnectDestinationRequest, ConnectDestinationResponse, Encryption, HandshakeRequest, HandshakeResponse, Username};
 use std::borrow::Cow;
 use std::net::SocketAddr;
 use tokio::io::{copy_bidirectional, AsyncReadExt, AsyncWriteExt};
@@ -26,7 +24,7 @@ use tokio_util::codec::{Framed, FramedParts};
 use tracing::debug;
 
 struct HandshakeResult {
-    client_username: String,
+    client_username: Username,
     client_encryption: Encryption,
     server_encryption: Encryption,
 }
@@ -62,7 +60,7 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
         }
         = handshake_request_bytes.try_into()?;
     debug!(
-        "Receive client handshake, client username: {client_username}, client encryption: {client_encryption:?}"
+        "Receive client handshake, client username: {client_username:?}, client encryption: {client_encryption:?}"
     );
     let proxy_user_info = get_user_repo()
         .find_user(&client_username)
@@ -74,7 +72,7 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
             .ok_or(CommonError::UserRsaCryptoNotExist(client_username.clone()))?,
     )?;
     debug!(
-        "Receive handshake from client [{}], username: {client_username}, client_encryption: {client_encryption:?}",
+        "Receive handshake from client [{}], username: {client_username:?}, client_encryption: {client_encryption:?}",
         server_state.incoming_connection_addr
     );
     let server_encryption = random_generate_encryption();
@@ -90,7 +88,7 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
     let handshake_response_bytes: Vec<u8> = handshake_response.try_into()?;
     handshake_framed.send(&handshake_response_bytes).await?;
     debug!(
-        "Send handshake to client [{}], username: {client_username}, client_encryption: {client_encryption:?}, server_encryption: {server_encryption:?}",
+        "Send handshake to client [{}], username: {client_username:?}, client_encryption: {client_encryption:?}, server_encryption: {server_encryption:?}",
         server_state.incoming_connection_addr
     );
     Ok(HandshakeResult {
@@ -109,7 +107,7 @@ async fn process_connect_destination<'a>(
         client_encryption,
         server_encryption,
     } = handshake_result;
-    debug!("Begin to setup destination for client user: {client_username}");
+    debug!("Begin to setup destination for client user: {client_username:?}");
     let mut connect_destination_frame = Framed::new(
         &mut server_state.incoming_stream,
         SecureLengthDelimitedCodec::new(
@@ -131,7 +129,7 @@ async fn process_connect_destination<'a>(
             let forward_user_info = forward_user_repository
                 .find_user(forward_config.username())
                 .ok_or(CommonError::UserNotExist(
-                    forward_config.username().to_owned(),
+                    forward_config.username().clone(),
                 ))?;
             match connect_destination_request {
                 ConnectDestinationRequest::Tcp(dst_addr) => {
@@ -217,9 +215,9 @@ pub async fn process(mut server_state: ServerState) -> Result<(), Error> {
     // Process handshake
     let handshake_result = process_handshake(&mut server_state).await?;
     // Process destination setup
-    let setup_target_endpoint_result =
+    let connect_destination_result =
         process_connect_destination(&mut server_state, handshake_result).await?;
     // Process relay
-    process_relay(server_state, setup_target_endpoint_result).await?;
+    process_relay(server_state, connect_destination_result).await?;
     Ok(())
 }

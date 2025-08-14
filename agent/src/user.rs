@@ -3,6 +3,7 @@ use common::config::CommonConfig;
 use common::user::repo::FileSystemUserRepository;
 use common::user::{User, UserRepository, UserWithProxyServers};
 use crypto::RsaCrypto;
+use protocol::Username;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::OnceLock;
@@ -19,7 +20,7 @@ pub fn get_agent_user_repo() -> &'static FileSystemUserRepository<AgentUser, Com
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AgentUser {
     proxy_servers: Vec<SocketAddr>,
-    username: String,
+    username: Username,
     #[serde(skip)]
     rsa_crypto: Option<RsaCrypto>,
 }
@@ -31,7 +32,7 @@ impl UserWithProxyServers for AgentUser {
 }
 
 impl User for AgentUser {
-    fn username(&self) -> &str {
+    fn username(&self) -> &Username {
         &self.username
     }
     fn rsa_crypto(&self) -> Option<&RsaCrypto> {

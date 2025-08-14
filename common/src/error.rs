@@ -1,5 +1,5 @@
 use ppaass_crypto::Error as CryptoError;
-use ppaass_protocol::UnifiedAddress;
+use ppaass_protocol::{UnifiedAddress, Username};
 use thiserror::Error;
 use tracing::metadata::ParseLevelError;
 
@@ -11,10 +11,10 @@ pub enum Error {
     ParseLevel(#[from] ParseLevelError),
     #[error(transparent)]
     Crypto(#[from] CryptoError),
-    #[error("User not exist: [{0}]")]
-    UserNotExist(String),
-    #[error("User rsa crypto not exist: [{0}]")]
-    UserRsaCryptoNotExist(String),
+    #[error("User not exist: {0:?}")]
+    UserNotExist(Username),
+    #[error("User rsa crypto not exist: {0:?}")]
+    UserRsaCryptoNotExist(Username),
     #[error("Connection exhausted: [{0}]")]
     ConnectionExhausted(String),
     #[error("Fail to setup destination: [{0}]")]

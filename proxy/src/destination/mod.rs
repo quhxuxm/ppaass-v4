@@ -1,6 +1,6 @@
 use crate::destination::tcp::TcpDestEndpoint;
 use crate::destination::udp::UdpDestEndpoint;
-use common::proxy::{ProxyConnection, ProxyFramedReaderWriter};
+use common::proxy::{ProxyConnection, ProxyFramedReadWrite};
 use protocol::UnifiedAddress;
 
 pub(crate) mod tcp;
@@ -13,7 +13,7 @@ pub enum Destination<'a> {
     Tcp(TcpDestEndpoint),
     /// The forward destination, the agent data will forward
     /// to the remote proxy through current proxy node.
-    Forward(Box<ProxyConnection<ProxyFramedReaderWriter<'a>>>),
+    Forward(Box<ProxyConnection<ProxyFramedReadWrite<'a>>>),
     /// The UDP destination
     #[allow(unused)]
     Udp {

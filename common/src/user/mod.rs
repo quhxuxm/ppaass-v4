@@ -4,13 +4,14 @@ use crate::config::UserRepoConfig;
 use crate::Error;
 use chrono::{DateTime, Utc};
 use ppaass_crypto::RsaCrypto;
+use ppaass_protocol::Username;
 use std::net::SocketAddr;
 use std::ops::Deref;
 
 /// The base user
 pub trait User {
     /// The username
-    fn username(&self) -> &str;
+    fn username(&self) -> &Username;
     /// Get the rsa crypto of the user
     fn rsa_crypto(&self) -> Option<&RsaCrypto>;
     /// Attach the rsa crypto to user
@@ -41,7 +42,7 @@ where
     where
         T: Deref<Target = Self::UserRepoConfigType> + Send + Sync + 'static;
     /// Find the user by username
-    fn find_user(&self, username: &str) -> Option<&Self::UserInfoType>;
+    fn find_user(&self, username: &Username) -> Option<&Self::UserInfoType>;
     /// Save a user into the repository
     fn save_user(&mut self, user: Self::UserInfoType);
 }

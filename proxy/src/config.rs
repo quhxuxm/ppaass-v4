@@ -3,6 +3,7 @@ use clap::Parser;
 use common::config::CommonConfig;
 use common::{FsUserRepoConfig, UserConfig, UserRepoConfig};
 use core::panic;
+use protocol::Username;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
@@ -48,7 +49,7 @@ pub struct ForwardConfig {
     user_info_public_key_file_name: String,
     user_repo_directory: PathBuf,
     user_repo_refresh_interval: u64,
-    username: String,
+    username: Username,
 }
 
 impl ForwardConfig {
@@ -58,7 +59,7 @@ impl ForwardConfig {
 }
 
 impl UserConfig for ForwardConfig {
-    fn username(&self) -> &str {
+    fn username(&self) -> &Username {
         &self.username
     }
 }

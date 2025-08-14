@@ -4,6 +4,7 @@ use common::config::CommonConfig;
 use common::user::repo::FileSystemUserRepository;
 use common::user::{User, UserRepository, UserWithExpiredTime, UserWithProxyServers};
 use crypto::RsaCrypto;
+use protocol::Username;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::OnceLock;
@@ -37,14 +38,14 @@ pub fn get_forward_user_repo()
 /// The user in proxy side
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProxyUser {
-    username: String,
+    username: Username,
     expired_time: Option<DateTime<Utc>>,
     #[serde(skip)]
     rsa_crypto: Option<RsaCrypto>,
 }
 
 impl User for ProxyUser {
-    fn username(&self) -> &str {
+    fn username(&self) -> &Username {
         &self.username
     }
     fn rsa_crypto(&self) -> Option<&RsaCrypto> {
@@ -64,14 +65,14 @@ impl UserWithExpiredTime for ProxyUser {
 /// The user for forwarding connection
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ForwardUser {
-    username: String,
+    username: Username,
     proxy_servers: Vec<SocketAddr>,
     #[serde(skip)]
     rsa_crypto: Option<RsaCrypto>,
 }
 
 impl User for ForwardUser {
-    fn username(&self) -> &str {
+    fn username(&self) -> &Username {
         &self.username
     }
     fn rsa_crypto(&self) -> Option<&RsaCrypto> {

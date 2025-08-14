@@ -1,3 +1,4 @@
+use ppaass_protocol::Username;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
@@ -180,7 +181,7 @@ pub trait UserConfig {
     /// assert_eq!(user.username(), "JohnDoe");
     /// ```
     ///
-    fn username(&self) -> &str;
+    fn username(&self) -> &Username;
 }
 
 /// A trait that extends `WithUserRepositoryConfig` to provide file system-specific

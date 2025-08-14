@@ -3,6 +3,7 @@ use clap::Parser;
 use common::config::CommonConfig;
 use common::UserConfig;
 use core::panic;
+use protocol::Username;
 use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 use std::sync::OnceLock;
@@ -47,7 +48,7 @@ pub struct Config {
     #[serde(flatten)]
     common: CommonConfig,
     proxy_connect_timeout: u64,
-    username: String,
+    username: Username,
 }
 
 impl Config {
@@ -77,13 +78,13 @@ impl Config {
             self.common.user_repo_refresh_interval = user_repo_refresh_interval;
         }
         if let Some(username) = command.username {
-            self.username = username;
+            self.username = Username(username);
         }
     }
 }
 
 impl UserConfig for Config {
-    fn username(&self) -> &str {
+    fn username(&self) -> &Username {
         &self.username
     }
 }
