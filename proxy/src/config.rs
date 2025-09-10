@@ -36,12 +36,7 @@ pub fn get_config() -> &'static Config {
     })
 }
 
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ForwardConfig {
     proxy_connect_timeout: u64,
     user_info_file_name: String,
@@ -85,11 +80,7 @@ impl FsUserRepoConfig for ForwardConfig {
     }
 }
 
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     #[serde(flatten)]
     common_config: CommonConfig,

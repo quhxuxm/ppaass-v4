@@ -258,11 +258,7 @@ pub trait FsUserRepoConfig: UserRepoConfig {
     fn user_info_file_name(&self) -> &str;
 }
 
-#[derive(
-    Serialize,
-    Deserialize,
-    Debug,
-)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CommonConfig {
     pub client_max_connections: usize,
     pub listening_address: SocketAddr,

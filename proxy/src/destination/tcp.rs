@@ -36,8 +36,9 @@ impl TcpDestEndpoint {
                 Duration::from_secs(connect_timeout),
                 TcpStream::connect(&dst_addrs[..]),
             )
-                .await
-                .map_err(|_| CommonError::ConnectTimeout(connect_timeout)) {
+            .await
+            .map_err(|_| CommonError::ConnectTimeout(connect_timeout))
+            {
                 Ok(Ok(tcp_stream)) => tcp_stream,
                 Ok(Err(e)) => {
                     error!("Fail to connect destination {dst_addrs:?} because of error: {e}");
@@ -52,7 +53,9 @@ impl TcpDestEndpoint {
                 error!("Fail to send destination tcp stream");
             };
         });
-        let tcp_stream = dst_connection_rx.await.map_err(|_| Error::Unknown("Fail to receive destination tcp stream".to_string()))?;
+        let tcp_stream = dst_connection_rx
+            .await
+            .map_err(|_| Error::Unknown("Fail to receive destination tcp stream".to_string()))?;
         let dst_addr = tcp_stream.peer_addr()?;
         Ok(Self {
             dst_addr,

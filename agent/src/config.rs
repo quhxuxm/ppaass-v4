@@ -1,7 +1,7 @@
 use crate::command::CommandArgs;
 use clap::Parser;
-use common::config::CommonConfig;
 use common::UserConfig;
+use common::config::CommonConfig;
 use core::panic;
 use protocol::Username;
 use serde::{Deserialize, Serialize};
@@ -39,11 +39,7 @@ pub fn get_config() -> &'static Config {
 }
 
 /// The configuration object
-#[derive(
-    Serialize,
-    Deserialize,
-    Debug,
-)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     #[serde(flatten)]
     common: CommonConfig,
@@ -88,4 +84,3 @@ impl UserConfig for Config {
         &self.username
     }
 }
-

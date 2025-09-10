@@ -1,7 +1,7 @@
 pub mod repo;
 
-use crate::config::UserRepoConfig;
 use crate::Error;
+use crate::config::UserRepoConfig;
 use chrono::{DateTime, Utc};
 use ppaass_crypto::RsaCrypto;
 use ppaass_protocol::Username;

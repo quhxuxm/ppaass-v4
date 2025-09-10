@@ -1,4 +1,4 @@
-use crate::config::{get_config, ForwardConfig};
+use crate::config::{ForwardConfig, get_config};
 use chrono::{DateTime, Utc};
 use common::config::CommonConfig;
 use common::user::repo::FileSystemUserRepository;
@@ -23,13 +23,13 @@ pub fn get_user_repo() -> &'static FileSystemUserRepository<ProxyUser, CommonCon
 
 /// Get the repository of the forwarding user.
 pub fn get_forward_user_repo()
-    -> Option<&'static FileSystemUserRepository<ForwardUser, ForwardConfig>> {
+-> Option<&'static FileSystemUserRepository<ForwardUser, ForwardConfig>> {
     FORWARD_USER_REPO
         .get_or_init(|| {
             let forward_user_repo = FileSystemUserRepository::<ForwardUser, ForwardConfig>::new(
                 get_config().forward()?,
             )
-                .ok()?;
+            .ok()?;
             Some(forward_user_repo)
         })
         .as_ref()

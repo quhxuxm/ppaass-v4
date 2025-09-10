@@ -1,7 +1,7 @@
 use crate::error::Error;
 use crate::tunnel::fetch_proxy_connection;
-use common::proxy::DestinationType;
 use common::ServerState;
+use common::proxy::DestinationType;
 use http_body_util::combinators::BoxBody;
 use http_body_util::{BodyExt, Empty};
 use hyper::body::Incoming;
@@ -93,10 +93,13 @@ async fn client_http_request_handler(
                     };
                     let mut proxy_connection = match proxy_connection
                         .connect_destination(destination_address.clone(), DestinationType::Tcp)
-                        .await {
+                        .await
+                    {
                         Ok(proxy_connection) => proxy_connection,
                         Err(e) => {
-                            error!("Failed to setup destination [{destination_address}] on proxy connection: {e}");
+                            error!(
+                                "Failed to setup destination [{destination_address}] on proxy connection: {e}"
+                            );
                             return;
                         }
                     };
@@ -107,7 +110,7 @@ async fn client_http_request_handler(
                         &mut upgraded_client_io,
                         &mut proxy_connection,
                     )
-                        .await
+                    .await
                     {
                         Err(e) => {
                             error!("Fail to proxy data between agent and proxy: {e:?}");
@@ -125,7 +128,9 @@ async fn client_http_request_handler(
         });
         Ok(Response::new(success_empty_body()))
     } else {
-        let proxy_connection = proxy_connection_rx.await.map_err(|_| Error::Unknown("Failed to receive proxy connection".to_string()))?;
+        let proxy_connection = proxy_connection_rx
+            .await
+            .map_err(|_| Error::Unknown("Failed to receive proxy connection".to_string()))?;
         let proxy_connection = proxy_connection
             .connect_destination(destination_address.clone(), DestinationType::Tcp)
             .await?;

@@ -80,8 +80,8 @@
 //!
 use crate::user::UserWithProxyServers;
 use crate::{
-    get_handshake_encryption, random_generate_encryption, rsa_decrypt_encryption, rsa_encrypt_encryption,
-    Error, SecureLengthDelimitedCodec,
+    Error, SecureLengthDelimitedCodec, get_handshake_encryption, random_generate_encryption,
+    rsa_decrypt_encryption, rsa_encrypt_encryption,
 };
 use futures_util::{SinkExt, StreamExt};
 use ppaass_protocol::{
@@ -180,8 +180,8 @@ impl ProxyConnection<Init> {
             Duration::from_secs(connect_timeout),
             TcpStream::connect(user_info.proxy_servers()),
         )
-            .await
-            .map_err(|_| Error::ConnectTimeout(connect_timeout))??;
+        .await
+        .map_err(|_| Error::ConnectTimeout(connect_timeout))??;
         let mut handshake_framed = Framed::new(
             &mut proxy_stream,
             SecureLengthDelimitedCodec::new(
@@ -192,16 +192,18 @@ impl ProxyConnection<Init> {
         let agent_encryption = random_generate_encryption();
         let rsa_encrypted_agent_encryption = rsa_encrypt_encryption(
             &agent_encryption,
-            user_info.rsa_crypto().ok_or(Error::UserRsaCryptoNotExist(
-                user_info.username().clone(),
-            ))?,
+            user_info
+                .rsa_crypto()
+                .ok_or(Error::UserRsaCryptoNotExist(user_info.username().clone()))?,
         )?;
         let client_handshake_request = HandshakeRequest {
             username: user_info.username().to_owned(),
             encryption: rsa_encrypted_agent_encryption.into_owned(),
         };
         let client_handshake_request_bytes: Vec<u8> = client_handshake_request.try_into()?;
-        handshake_framed.send(&client_handshake_request_bytes).await?;
+        handshake_framed
+            .send(&client_handshake_request_bytes)
+            .await?;
         let proxy_handshake_bytes =
             handshake_framed
                 .next()
@@ -286,7 +288,9 @@ impl<'a> ProxyConnection<ProxyFramed<'a>> {
             DestinationType::Udp => ConnectDestinationRequest::Udp(destination_addr.clone()),
         };
         let connect_destination_request_bytes: Vec<u8> = connect_destination_request.try_into()?;
-        proxy_framed.send(&connect_destination_request_bytes).await?;
+        proxy_framed
+            .send(&connect_destination_request_bytes)
+            .await?;
         let connect_destination_response_bytes = proxy_framed
             .next()
             .await

@@ -47,14 +47,18 @@ pub async fn process(mut server_state: ServerState) -> Result<(), Error> {
     Ok(())
 }
 
-async fn fetch_proxy_connection(proxy_connection_tx: Sender<ProxyConnection<ProxyFramed<'static>>>) -> Result<(), Error>
-{
+async fn fetch_proxy_connection(
+    proxy_connection_tx: Sender<ProxyConnection<ProxyFramed<'static>>>,
+) -> Result<(), Error> {
     let config = get_config();
     let agent_user = get_agent_user_repo()
         .find_user(config.username())
         .ok_or(common::Error::UserNotExist(config.username().to_owned()))?;
     tokio::spawn(async move {
-        let connection = match ProxyConnection::new(agent_user, config.proxy_connect_timeout()).await.map_err(Error::Common) {
+        let connection = match ProxyConnection::new(agent_user, config.proxy_connect_timeout())
+            .await
+            .map_err(Error::Common)
+        {
             Ok(connection) => connection,
             Err(e) => {
                 error!("Fail to initialize proxy connection: {e:?}");

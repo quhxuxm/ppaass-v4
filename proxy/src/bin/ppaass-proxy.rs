@@ -1,4 +1,4 @@
-use common::{build_server_runtime, log, start_server, ServerState};
+use common::{ServerState, build_server_runtime, log, start_server};
 use proxy::config::get_config;
 use proxy::error::Error;
 use proxy::tunnel;

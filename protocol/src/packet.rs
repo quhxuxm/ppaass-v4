@@ -94,8 +94,7 @@ impl TryFrom<BytesMut> for HandshakeRequest {
 impl TryFrom<HandshakeRequest> for Vec<u8> {
     type Error = Error;
     fn try_from(value: HandshakeRequest) -> Result<Self, Self::Error> {
-        let result =
-            bincode::serde::encode_to_vec(value, bincode::config::standard())?;
+        let result = bincode::serde::encode_to_vec(value, bincode::config::standard())?;
         Ok(result)
     }
 }
@@ -126,8 +125,7 @@ impl TryFrom<BytesMut> for HandshakeResponse {
 impl TryFrom<HandshakeResponse> for Vec<u8> {
     type Error = Error;
     fn try_from(value: HandshakeResponse) -> Result<Self, Self::Error> {
-        let result =
-            bincode::serde::encode_to_vec(value, bincode::config::standard())?;
+        let result = bincode::serde::encode_to_vec(value, bincode::config::standard())?;
         Ok(result)
     }
 }
@@ -143,10 +141,10 @@ pub enum ConnectDestinationRequest {
 impl TryFrom<Bytes> for ConnectDestinationRequest {
     type Error = Error;
     fn try_from(value: Bytes) -> Result<Self, Self::Error> {
-        let (result, _) = bincode::serde::decode_from_slice::<ConnectDestinationRequest, Configuration>(
-            &value,
-            bincode::config::standard(),
-        )?;
+        let (result, _) = bincode::serde::decode_from_slice::<
+            ConnectDestinationRequest,
+            Configuration,
+        >(&value, bincode::config::standard())?;
         Ok(result)
     }
 }
@@ -161,8 +159,7 @@ impl TryFrom<BytesMut> for ConnectDestinationRequest {
 impl TryFrom<ConnectDestinationRequest> for Vec<u8> {
     type Error = Error;
     fn try_from(value: ConnectDestinationRequest) -> Result<Self, Self::Error> {
-        let result =
-            bincode::serde::encode_to_vec(value, bincode::config::standard())?;
+        let result = bincode::serde::encode_to_vec(value, bincode::config::standard())?;
         Ok(result)
     }
 }
@@ -201,10 +198,10 @@ pub enum ConnectDestinationResponse {
 impl TryFrom<Bytes> for ConnectDestinationResponse {
     type Error = Error;
     fn try_from(value: Bytes) -> Result<Self, Self::Error> {
-        let (result, _) = bincode::serde::decode_from_slice::<ConnectDestinationResponse, Configuration>(
-            &value,
-            bincode::config::standard(),
-        )?;
+        let (result, _) = bincode::serde::decode_from_slice::<
+            ConnectDestinationResponse,
+            Configuration,
+        >(&value, bincode::config::standard())?;
         Ok(result)
     }
 }
@@ -219,8 +216,7 @@ impl TryFrom<BytesMut> for ConnectDestinationResponse {
 impl TryFrom<ConnectDestinationResponse> for Vec<u8> {
     type Error = Error;
     fn try_from(value: ConnectDestinationResponse) -> Result<Self, Self::Error> {
-        let result =
-            bincode::serde::encode_to_vec(value, bincode::config::standard())?;
+        let result = bincode::serde::encode_to_vec(value, bincode::config::standard())?;
         Ok(result)
     }
 }
@@ -258,8 +254,7 @@ impl TryFrom<BytesMut> for Relay {
 impl TryFrom<Relay> for Vec<u8> {
     type Error = Error;
     fn try_from(value: Relay) -> Result<Self, Self::Error> {
-        let result =
-            bincode::serde::encode_to_vec(value, bincode::config::standard())?;
+        let result = bincode::serde::encode_to_vec(value, bincode::config::standard())?;
         Ok(result)
     }
 }

@@ -13,20 +13,22 @@ pub use config::ServerConfig;
 pub use config::UserConfig;
 pub use config::UserRepoConfig;
 pub use error::Error;
-use ppaass_crypto::{generate_aes_encryption_token, generate_blowfish_encryption_token, RsaCrypto};
+use ppaass_crypto::{RsaCrypto, generate_aes_encryption_token, generate_blowfish_encryption_token};
 use ppaass_protocol::Encryption;
 use rand::random;
 pub use runtime::build_server_runtime;
-pub use server::start_server;
 pub use server::ServerGuard;
 pub use server::ServerState;
+pub use server::start_server;
 use std::borrow::Cow;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
 static HANDSHAKE_ENCRYPTION: LazyLock<Arc<Encryption>> = LazyLock::new(|| {
     Arc::new(Encryption::Blowfish({
-        b"1212398347384737434783748347387438743742982332672763272320119203".to_vec().into()
+        b"1212398347384737434783748347387438743742982332672763272320119203"
+            .to_vec()
+            .into()
     }))
 });
 

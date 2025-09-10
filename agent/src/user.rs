@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::OnceLock;
 
-pub static AGENT_USER_REPO: OnceLock<FileSystemUserRepository<AgentUser, CommonConfig>> = OnceLock::new();
+pub static AGENT_USER_REPO: OnceLock<FileSystemUserRepository<AgentUser, CommonConfig>> =
+    OnceLock::new();
 
 pub fn get_agent_user_repo() -> &'static FileSystemUserRepository<AgentUser, CommonConfig> {
     AGENT_USER_REPO.get_or_init(|| {

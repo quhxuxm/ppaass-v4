@@ -1,25 +1,28 @@
 use crate::client::ClientTcpRelayEndpoint;
 use crate::config::get_config;
 use crate::destination;
-use crate::destination::udp::UdpDestEndpoint;
 use crate::destination::Destination;
+use crate::destination::udp::UdpDestEndpoint;
 use crate::error::Error;
 use crate::user::{get_forward_user_repo, get_user_repo};
+use common::Error as CommonError;
 use common::config::UserConfig;
 use common::proxy::{DestinationType, ProxyConnection};
 use common::user::User;
 use common::user::UserRepository;
-use common::Error as CommonError;
 use common::{
-    get_handshake_encryption, random_generate_encryption, rsa_decrypt_encryption, rsa_encrypt_encryption,
-    SecureLengthDelimitedCodec, ServerState,
+    SecureLengthDelimitedCodec, ServerState, get_handshake_encryption, random_generate_encryption,
+    rsa_decrypt_encryption, rsa_encrypt_encryption,
 };
 use destination::tcp::TcpDestEndpoint;
 use futures_util::{SinkExt, StreamExt};
-use protocol::{ConnectDestinationRequest, ConnectDestinationResponse, Encryption, HandshakeRequest, HandshakeResponse, Username};
+use protocol::{
+    ConnectDestinationRequest, ConnectDestinationResponse, Encryption, HandshakeRequest,
+    HandshakeResponse, Username,
+};
 use std::borrow::Cow;
 use std::net::SocketAddr;
-use tokio::io::{copy_bidirectional, AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, copy_bidirectional};
 use tokio_util::codec::{Framed, FramedParts};
 use tracing::debug;
 
@@ -46,19 +49,18 @@ async fn process_handshake(server_state: &mut ServerState) -> Result<HandshakeRe
         "Waiting for receive handshake from client [{}]",
         server_state.incoming_connection_addr
     );
-    let handshake_request_bytes = handshake_framed
-        .next()
-        .await
-        .ok_or(CommonError::ConnectionExhausted(format!(
-            "Fail to read handshake message from agent: {}",
-            server_state.incoming_connection_addr
-        )))??;
-    let
-        HandshakeRequest {
-            username: client_username,
-            encryption: client_encryption,
-        }
-        = handshake_request_bytes.try_into()?;
+    let handshake_request_bytes =
+        handshake_framed
+            .next()
+            .await
+            .ok_or(CommonError::ConnectionExhausted(format!(
+                "Fail to read handshake message from agent: {}",
+                server_state.incoming_connection_addr
+            )))??;
+    let HandshakeRequest {
+        username: client_username,
+        encryption: client_encryption,
+    } = handshake_request_bytes.try_into()?;
     debug!(
         "Receive client handshake, client username: {client_username:?}, client encryption: {client_encryption:?}"
     );
@@ -128,16 +130,14 @@ async fn process_connect_destination<'a>(
         (Some(forward_config), Some(forward_user_repository)) => {
             let forward_user_info = forward_user_repository
                 .find_user(forward_config.username())
-                .ok_or(CommonError::UserNotExist(
-                    forward_config.username().clone(),
-                ))?;
+                .ok_or(CommonError::UserNotExist(forward_config.username().clone()))?;
             match connect_destination_request {
                 ConnectDestinationRequest::Tcp(dst_addr) => {
                     let proxy_connection = ProxyConnection::new(
                         forward_user_info,
                         forward_config.proxy_connect_timeout(),
                     )
-                        .await?;
+                    .await?;
                     let proxy_connection = proxy_connection
                         .connect_destination(dst_addr, DestinationType::Tcp)
                         .await?;
@@ -192,7 +192,7 @@ async fn process_relay<'a>(
                 &mut client_tcp_relay_endpoint,
                 &mut forward_proxy_connection,
             )
-                .await?;
+            .await?;
         }
         Destination::Udp {
             dst_udp_endpoint,

@@ -1,7 +1,7 @@
+use crate::Error;
 use crate::config::FsUserRepoConfig;
 use crate::user::User;
 use crate::user::UserRepository;
-use crate::Error;
 use ppaass_crypto::RsaCrypto;
 use ppaass_protocol::Username;
 use serde::de::DeserializeOwned;
@@ -25,10 +25,7 @@ where
     U: User + Send + Sync + DeserializeOwned + 'static,
     C: FsUserRepoConfig + Send + Sync + 'static,
 {
-    fn fill_storage(
-        config: &C,
-        storage: &mut HashMap<Username, U>,
-    ) -> Result<(), Error> {
+    fn fill_storage(config: &C, storage: &mut HashMap<Username, U>) -> Result<(), Error> {
         let user_repo_directory_path = config.user_repo_directory();
         let mut user_repo_directory = std::fs::read_dir(user_repo_directory_path)?;
         while let Some(Ok(sub_entry)) = user_repo_directory.next() {

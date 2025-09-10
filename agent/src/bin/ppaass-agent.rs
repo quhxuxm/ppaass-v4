@@ -1,7 +1,7 @@
 use agent::config::get_config;
 use agent::error::Error;
 use agent::tunnel;
-use common::{build_server_runtime, log, start_server, ServerState};
+use common::{ServerState, build_server_runtime, log, start_server};
 use tokio::signal;
 use tracing::{debug, error, info};
 
