@@ -1,7 +1,7 @@
 mod codec;
 pub mod config;
 mod error;
-mod log;
+pub mod log;
 pub mod proxy;
 mod runtime;
 mod server;
@@ -13,7 +13,6 @@ pub use config::ServerConfig;
 pub use config::UserConfig;
 pub use config::UserRepoConfig;
 pub use error::Error;
-pub use log::init_log;
 use ppaass_crypto::{generate_aes_encryption_token, generate_blowfish_encryption_token, RsaCrypto};
 use ppaass_protocol::Encryption;
 use rand::random;

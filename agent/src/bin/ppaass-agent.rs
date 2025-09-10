@@ -1,7 +1,7 @@
 use agent::config::get_config;
 use agent::error::Error;
 use agent::tunnel;
-use common::{build_server_runtime, init_log, start_server, ServerState};
+use common::{build_server_runtime, log, start_server, ServerState};
 use tokio::signal;
 use tracing::{debug, error, info};
 
@@ -12,7 +12,7 @@ async fn handle_connection(server_state: ServerState) -> Result<(), Error> {
 }
 
 fn main() -> Result<(), Error> {
-    let _log_guard = init_log(get_config().common())?;
+    let _log_guard = log::init(get_config().common())?;
     let server_runtime = build_server_runtime(get_config().common())?;
     server_runtime.block_on(async move {
         let server_guard = start_server(get_config().common(), handle_connection);

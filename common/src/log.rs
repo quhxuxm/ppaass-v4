@@ -5,7 +5,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 
-pub fn init_log<C: ServerConfig>(config: &C) -> Result<WorkerGuard, Error> {
+pub fn init<C: ServerConfig>(config: &C) -> Result<WorkerGuard, Error> {
     let tracing_subscriber_registry = tracing_subscriber::registry();
     let (trace_file_appender, trace_appender_guard) = tracing_appender::non_blocking(
         tracing_appender::rolling::daily(config.log_directory(), config.log_name_prefix()),
