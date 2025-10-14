@@ -5,7 +5,7 @@ pub enum Error {
     #[error(transparent)]
     InvalidLength(#[from] InvalidLength),
     #[error(transparent)]
-    Unpad(#[from] block_padding::UnpadError),
+    Unpad(#[from] cipher::block_padding::UnpadError),
     #[error(transparent)]
     Rsa(#[from] rsa::errors::Error),
     #[error(transparent)]

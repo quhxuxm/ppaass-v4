@@ -9,10 +9,9 @@ rand = { workspace = true }
 aes = { workspace = true }
 blowfish = { workspace = true }
 rsa = { workspace = true }
-cipher = { workspace = true, features = ["block-padding", "alloc"] }
+cipher = { workspace = true, features = ["alloc", "std"] }
 bytes = { workspace = true }
 thiserror = { workspace = true }
 cbc = { workspace = true }
-block-padding = { workspace = true, features = ["std"] }
 spki = { workspace = true, features = ["std"] }
 pkcs8 = { workspace = true }
