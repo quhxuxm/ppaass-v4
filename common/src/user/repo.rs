@@ -117,10 +117,12 @@ where
             _config_mark: Default::default(),
         })
     }
+
     fn find_user(&self, username: &Username) -> Option<&Self::UserInfoType> {
-        let user_info = self.storage.get(&username)?;
+        let user_info = self.storage.get(username)?;
         Some(user_info)
     }
+
     fn save_user(&mut self, user: Self::UserInfoType) {
         self.storage.insert(user.username().to_owned(), user);
     }

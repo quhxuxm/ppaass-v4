@@ -40,7 +40,7 @@ pub fn get_handshake_encryption<'a>() -> &'a Encryption {
 #[inline(always)]
 pub fn random_generate_encryption() -> Encryption {
     let random_number = random::<u64>();
-    if random_number % 2 == 0 {
+    if random_number.is_multiple_of(2) {
         Encryption::Aes(generate_aes_encryption_token())
     } else {
         Encryption::Blowfish(generate_blowfish_encryption_token())

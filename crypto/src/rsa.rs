@@ -12,10 +12,10 @@ pub use rsa::{RsaPrivateKey, RsaPublicKey};
 use std::fmt::Debug;
 use std::io::Read;
 
-pub const DEFAULT_AGENT_PRIVATE_KEY_PATH: &str = "AgentPrivateKey.pem";
-pub const DEFAULT_AGENT_PUBLIC_KEY_PATH: &str = "AgentPublicKey.pem";
-pub const DEFAULT_PROXY_PRIVATE_KEY_PATH: &str = "ProxyPrivateKey.pem";
-pub const DEFAULT_PROXY_PUBLIC_KEY_PATH: &str = "ProxyPublicKey.pem";
+pub static DEFAULT_AGENT_PRIVATE_KEY_PATH: &str = "AgentPrivateKey.pem";
+pub static DEFAULT_AGENT_PUBLIC_KEY_PATH: &str = "AgentPublicKey.pem";
+pub static DEFAULT_PROXY_PRIVATE_KEY_PATH: &str = "ProxyPrivateKey.pem";
+pub static DEFAULT_PROXY_PUBLIC_KEY_PATH: &str = "ProxyPublicKey.pem";
 
 /// The util to do RSA encryption and decryption.
 #[derive(Debug)]
